@@ -1,0 +1,11 @@
+{
+  "TOKEN" : "ODYwODA3ODc5NDE3NTI4MzIx.G8IL1T.IoPoLzzGIPpQr4UZNypmh8vR1JpEkcYe_-9CEk",
+  "DATABASE" : "Paimon",
+  "POSTGRESQL_USER" : "postgres",
+  "POSTGRESQL_PASS" : "8080",
+  "HOST" : "127.0.0.1",
+  "PORT" : "5432",
+  "MIN_XP_MSG" : 1,
+  "MAX_XP_MSG" : 10,
+  "IGNORING_XP_TIME" : 30
+}
