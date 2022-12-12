@@ -1,0 +1,13 @@
+{
+  "font_path" : "utilities/fonts/zh-cn.ttf",
+  "font_big_size" : 46,
+  "font_medium_size" : 34,
+  "font_small_size" : 22,
+
+  "portret_size_k" : [224, 224],
+  "portret_paddings_k" : [0.0703125, 0.18359375],
+  "mode" : "RGBA",
+  "backgrounds_path" : "utilities/card_backgrounds/",
+  "mask_path" : "utilities/card_fillers/MASK_CARD.png",
+  "exp_img_path" : "utilities/card_fillers/EXP.png"
+}

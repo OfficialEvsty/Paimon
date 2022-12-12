@@ -1,0 +1,22 @@
+[
+  {
+    "type" : 0,
+    "name" : "EXP Bottle",
+    "description" : "Use it to get some exp points.",
+    "value" : 100,
+    "usable" : true,
+    "consumable" : true,
+    "stackable" : true,
+    "image_url" : "utilities/images/scroll.png"
+  },
+  {
+    "type" : 1,
+    "name" : "Coffee",
+    "description" : "Use it to get some energy.",
+    "value" : 100,
+    "usable" : true,
+    "consumable" : true,
+    "stackable" : true,
+    "image_url" : "utilities/images/flask.png"
+  }
+]

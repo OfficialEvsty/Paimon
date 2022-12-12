@@ -1,36 +1,61 @@
-import psycopg2
+from discord import app_commands
 from bot import Bot
-from commands.cmd_profile import *
 from commands.user_info import *
-from commands.cmd_main import *
-import commands.cmd_main as com
+import discord
+import commands.user_info
+import commands.cmd_profile
+import commands.cmd_main
+import commands.cmd_inventory
+import discord.app_commands
+from item_system.inventory import Inventory
+from item_system.generator import Generator
 
 
-bot = Bot()
-
-def cmds_register():
-    cmds = {name: cmd for (name, cmd) in globals().items() if name.startswith("cmd_") is True}
-    print(len(cmds), "commands registered.")
-    print(cmds)
-    bot.cmds_dict = cmds
-
-cmds_register()
 
 if __name__ == "__main__":
+    bot = Bot()
+
+
+
+
+
+
+
+
+    @bot.tree.command(name="animedolbayeb", description="his greetings message welcomes u!")
+    async def self(interaction: discord.Interaction, name: str):
+        await commands.cmd_main.show_tips(interaction)
+
+
+    @bot.tree.command(name="profile", description="Показывает вашу карту профиля на сервере.")
+    async def app_show_card(interaction: discord.Interaction, user: discord.Member = None):
+        await commands.cmd_profile.cmd_card(interaction, user)
+
+
+    @bot.tree.command(name="set_uid", description="Зарегистрировать свой UID в дискорде. Это поможет легче взаимодейстовать с Паймон.")
+    async def app_set_uid(interaction: discord.Interaction, uid: int):
+        await commands.user_info.cmd_set_uid(interaction, uid)
+
+
+    @bot.tree.command(name="get_uid", description="Увидеть свой UID на сервере.")
+    async def app_get_uid(interaction: discord.Interaction):
+        await commands.user_info.cmd_get_uid(interaction)
+
+
+    @bot.tree.command(name="bio", description="Добавить информацию о себе, чтобы вас смогли узнать получше.")
+    async def app_bio(interaction: discord.Interaction, text: str):
+        await commands.user_info.cmd_bio(interaction, text)
+
+
+    @bot.tree.command(name="custom_embed", description="Создать сообщение вставку.")
+    async def app_custom_embed(interaction: discord.Interaction, title: str = None, description: str = None, color: int = None, image_url: str = None,
+                              tumbnail: str = None):
+        await commands.cmd_main.create_custom_embed(interaction, title, description, color, image_url, tumbnail)
+
+    @bot.tree.command(name="inventory", description="Открыть инвентарь.")
+    async def inventory(interaction: discord.Interaction):
+        await commands.cmd_inventory.show_inventory(interaction)
+
     bot.startup()
-    bot.client.run(bot.cfg.token)
+    bot.run(bot.cfg.token)
     pass
-
-con = psycopg2.connect(
-    database="Paimon",
-    user="postgres",
-    password="8080",
-    host="127.0.0.1",
-    port="5432"
-)
-
-
-
-
-
-print("Database opened successfully")

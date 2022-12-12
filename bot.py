@@ -1,12 +1,16 @@
 import time
-
+from discord import app_commands
 import discord
 import json
+import discord.app_commands
 import asyncio
-import asyncpg
-from commands.profile import Profile
 from leveling import Leveling
 from data.database import Database
+import utilities.card_backgrounds.logic.Cards as utilities
+from item_system.generator import Generator
+import shop_system.market
+
+import aiohttp
 
 
 class Config:
@@ -22,64 +26,54 @@ class Config:
         self.ignoring_xp_time = cfg['IGNORING_XP_TIME']
 
 
-class Bot:
+class Bot(discord.Client):
 
+    db: Database = None
+    bot = None
+    generator: Generator = None
     def __init__(self):
-          with open('config.json', 'r') as f:
-              self.cfg = Config(json.loads(f.read()))
+        intents = discord.Intents.all()
+        super().__init__(intents=intents)
+        self.synced = False
+        self.tree = app_commands.CommandTree(self)
+        with open('config.json', 'r') as f:
+            self.cfg = Config(json.loads(f.read()))
 
-          intents = discord.Intents.default()
-          intents.message_content = True
+        Bot.db = Database(self.cfg.dbname, self.cfg.postgresql_user, self.cfg.postgresql_pass, self.cfg.host,
+                           self.cfg.port)
+        Bot.generator = Generator()
+        Bot.bot = self
+        self.leveling = Leveling(self.cfg.min_xp_msg, self.cfg.max_xp_msg, self.cfg.ignoring_xp_time)
 
-          self.client = discord.Client(intents=intents)
-          self.db = Database(self.cfg.dbname, self.cfg.postgresql_user, self.cfg.postgresql_pass, self.cfg.host, self.cfg.port)
-          self.leveling = Leveling(self, self.cfg.min_xp_msg, self.cfg.max_xp_msg, self.cfg.ignoring_xp_time)
+        utilities.init_cards_list()
+        print(utilities.cards_list)
+
+        #delete later
 
 
-    cmds_dict = {}
-    utilities = None
+
 
     def startup(self):
 
-        @self.client.event
+        @self.event
         async def on_ready():
-            await self.db.connect()
-            print("We have logged in as {0.user}".format(self.client))
+            await Bot.db.connect()
+            await self.wait_until_ready()
+            if not self.synced:
+                await self.tree.sync(guild=None)
+                print("Синхронизировалось")
+                self.synced = True
+            print("We have logged in as {0.user}".format(self))
 
-        @self.client.event
+        @self.event
         async def on_message(msg):
 
-            if msg.author == self.client.user:
-              return
-            await self.leveling.add_message_xp(msg.author.id)
+            if msg.author == self.user:
+                return
+            await self.leveling.add_message_xp(msg.guild.id, msg.author.id)
 
-
-            start = time.monotonic()
-            if msg.content.startswith("@"):
-              sign = msg.content.split()
-              cmd_name = sign[0][1:]
-              if len(sign) > 1:
-                kwargs = []
-                kwargs.append(msg)
-                kwargs.append(sign[1:])
-              else:
-                kwargs = []
-                kwargs.append(msg)
-
-              command = self.cmds_dict["cmd_" + cmd_name]
-              await command(*kwargs)
-            end = time.monotonic()
-            print("on_msg", end - start)
-
-            self.leveling.ignoring_user_list.append(msg.author.id)
-            await asyncio.sleep(self.leveling.ignoring_time)
-            self.leveling.ignoring_user_list.remove(msg.author.id)
-
-
-
-
-
-
-
-
-
+            if msg.author.id not in self.leveling.ignoring_user_list:
+                self.leveling.ignoring_user_list.append(msg.author.id)
+                print(self.leveling.ignoring_user_list)
+                await asyncio.sleep(self.leveling.ignoring_time)
+                self.leveling.ignoring_user_list.remove(msg.author.id)

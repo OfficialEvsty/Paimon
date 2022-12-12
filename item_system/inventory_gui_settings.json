@@ -1,0 +1,15 @@
+{
+  "background_path" : "utilities/images/background.png",
+  "item_holder_path" : "utilities/images/item_holder.png",
+  "border_path" : "utilities/images/border.png",
+
+  "item_holder_size_k" : [0.15, 0.15],
+  "item_size_k" : [0.9, 0.9],
+  "holder_paddings_k" : [0.1, 0.05],
+  "inventory_size_on_page" : 10,
+  "inventory_size_row" : 4,
+  "interval_btw_holders_k" : [0.05, 0.05],
+
+  "mode" : "RGBA"
+
+}
