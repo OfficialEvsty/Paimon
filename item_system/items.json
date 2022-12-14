@@ -1,22 +1,57 @@
 [
   {
     "type" : 0,
-    "name" : "EXP Bottle",
+    "name" : "Scroll",
+    "rarity" : "unusual",
     "description" : "Use it to get some exp points.",
     "value" : 100,
     "usable" : true,
     "consumable" : true,
     "stackable" : true,
-    "image_url" : "utilities/images/scroll.png"
+    "image_url" : "item_system/item_images/scroll.png"
   },
   {
     "type" : 1,
-    "name" : "Coffee",
+    "name" : "Flask",
+    "rarity" : "unusual",
     "description" : "Use it to get some energy.",
-    "value" : 100,
+    "value" : 200,
     "usable" : true,
     "consumable" : true,
     "stackable" : true,
-    "image_url" : "utilities/images/flask.png"
+    "image_url" : "item_system/item_images/flask.png"
+  },
+  {
+    "type" : 2,
+    "name" : "Butterfly",
+    "rarity" : "unusual",
+    "description" : "Fairs around users.",
+    "value" : 500,
+    "usable" : true,
+    "consumable" : true,
+    "stackable" : true,
+    "image_url" : "item_system/item_images/Hellfire-Butterfly.png"
+  },
+  {
+    "type": 3,
+    "name": "Soup dish",
+    "rarity": "rare",
+    "description": "Looks yummy.",
+    "value": 1000,
+    "usable": true,
+    "consumable": true,
+    "stackable": true,
+    "image_url": "item_system/item_images/Cloud-Shrouded-Jade.png"
+  },
+  {
+    "type": 4,
+    "name": "The Feather Artifact",
+    "rarity": "legend",
+    "description": "Legends says...",
+    "value": 10000,
+    "usable": true,
+    "consumable": true,
+    "stackable": false,
+    "image_url": "item_system/item_images/Arhaic_stone.png"
   }
 ]

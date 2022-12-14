@@ -1,4 +1,6 @@
 from discord import app_commands
+
+import shop_system.market
 from bot import Bot
 from commands.user_info import *
 import discord
@@ -55,6 +57,10 @@ if __name__ == "__main__":
     @bot.tree.command(name="inventory", description="Открыть инвентарь.")
     async def inventory(interaction: discord.Interaction):
         await commands.cmd_inventory.show_inventory(interaction)
+
+    @bot.tree.command(name="get_item", description="Добавить предмет в свой инвентарь.")
+    async def app_add_item(interaction: discord.Interaction, item_type: int):
+        await shop_system.market.add_item(interaction, item_type)
 
     bot.startup()
     bot.run(bot.cfg.token)

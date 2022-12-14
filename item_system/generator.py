@@ -11,7 +11,7 @@ class Generator:
             Generator.all_items_by_type = json.loads(file.read())
 
     @classmethod
-    def create_item(cls, item_id: int, item_type: bytes) -> Item:
+    def create_item(cls, item_type: bytes, item_id: int = None) -> Item:
         key = "type"
         item_dict = {}
         for i in range(len(cls.all_items_by_type)):
@@ -22,6 +22,7 @@ class Generator:
             return Item(item_id=item_id,
                         item_type=item_dict['type'],
                         name=item_dict['name'],
+                        rarity=item_dict['rarity'],
                         description=item_dict['description'],
                         value=item_dict['value'],
                         usable=item_dict['usable'],

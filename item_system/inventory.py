@@ -29,7 +29,7 @@ class Inventory:
         conditions_dict = {"user_id" : user_id, "guild" : guild_id}
         condition_pattern = "AND"
         dict_container = {"user_id" : user_id, "guild" : guild_id, "type" : item.type}
-        Bot.db.set_db(table, await Bot.db.filter(condition_pattern, conditions_dict), dict_container)
+        await Bot.db.add_db(table, await Bot.db.filter(condition_pattern, conditions_dict), dict_container)
 
     @classmethod
     async def remove_item(cls, interaction: discord.Interaction, item_id : int):
@@ -39,6 +39,6 @@ class Inventory:
 
         condition_pattern = "AND"
         conditions_dict = {"user_id" : user_id, "guild" : guild_id, "id" : item_id}
-        Bot.db.delete(table, await Bot.db.filter(condition_pattern, conditions_dict))
+        await Bot.db.delete(table, await Bot.db.filter(condition_pattern, conditions_dict))
 
 

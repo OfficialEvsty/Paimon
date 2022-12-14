@@ -1,0 +1,10 @@
+{
+  "sel_menu_1_id" : "select_item_menu_1",
+  "sel_menu_1_placeholder" : "Select an item",
+  "sel_menu_1_max_v" : 10,
+  "sel_menu_1_min_v" : 0,
+  "sel_menu_2_id" : "select_item_menu_2",
+  "sel_menu_2_placeholder" : "Select an action",
+  "sel_menu_2_max_v" : 1,
+  "sel_menu_2_min_v" : 1
+}
