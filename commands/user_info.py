@@ -4,7 +4,7 @@ import discord
 import discord.app_commands
 from utilities.embeds.paimon import Paimon_Embed
 from bot import Bot
-import re
+
 
 
 
@@ -31,26 +31,7 @@ async def cmd_take_money(*kwargs):
     pass
 
 
-async def cmd_set_uid(interaction: discord.Interaction, _uid: int):
-    field_name = 'uid'
-    uid = _uid
-    guild_id = interaction.guild.id
-    col_guild = "guild"
 
-    if not uid_validation(uid):
-        await interaction.response.send_message("Неверный формат UID. Правильным форматом является 9 значное число, начинающееся с цифры 7.")
-    user_id = interaction.user.id
-
-    # args for sql query
-    condition_pattern = "AND"
-    dict_conditions = {"id" : user_id, "guild" : guild_id}
-    dict_container = {"id" : user_id, field_name : uid, col_guild : guild_id}
-    is_success = await Bot.db.set_db(table='users', conditions_str=await Bot.db.filter(condition_pattern, dict_conditions),
-                        dict_col_val=dict_container)
-    if not is_success:
-        await Bot.db.update_db(table='users', conditions_str=await Bot.db.filter(condition_pattern, dict_conditions),
-                        dict_col_val=dict_container)
-    await interaction.response.send_message("UID успешно сохранен.")
 
 
 async def cmd_get_uid(interaction: discord.Interaction):
@@ -72,7 +53,7 @@ async def cmd_get_uid(interaction: discord.Interaction):
     p_embed = Paimon_Embed().construct("UID command", str(user) + " UID's:" + str(uid))
     await interaction.response.send_message(embed=p_embed)
 
-async def cmd_bio(interaction: discord.Interaction, text: str):
+"""async def cmd_bio(interaction: discord.Interaction, text: str):
     field_name = 'bio'
     user_id = interaction.user.id
     table = 'users'
@@ -91,15 +72,11 @@ async def cmd_bio(interaction: discord.Interaction, text: str):
             await Bot.db.update_db(table=table, conditions_str=await Bot.db.filter(condition_pattern, dict_conditions),
                                 dict_col_val=dict_container)
         return await interaction.response.send_message("Подпись сохранена.")
-    return await interaction.response.send_message(f"Минимальное количество символом - 1, Максимальное количество - 100.")
+    return await interaction.response.send_message(f"Минимальное количество символом - 1, Максимальное количество - 100.")"""
 
 
-def uid_validation(text):
-    regex = r'^7\d{8}$'
-    return bool(re.match(regex, str(text)))
 
-def bio_validation(text):
-    if len(text) <= 100 and len(text) > 0 : return bool
+
 
 
 

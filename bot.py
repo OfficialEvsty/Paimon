@@ -1,9 +1,11 @@
-import time
+import wavelink
 from discord import app_commands
 import discord
 import json
 import discord.app_commands
 import asyncio
+
+import music.custom_music
 from leveling import Leveling
 from data.database import Database
 import utilities.card_backgrounds.logic.Cards as utilities
@@ -63,14 +65,33 @@ class Bot(discord.Client):
                 await self.tree.sync(guild=None)
                 print("Синхронизировалось")
                 self.synced = True
+
+            await wavelink.NodePool.create_node(
+                bot=self,
+                host="nonssl.freelavalink.ga",
+                port=80,
+                password="www.freelavalink.ga"
+            )
             print("We have logged in as {0.user}".format(self))
+
+        @self.event
+        async def on_wavelink_node_ready(node: wavelink.Node):
+            print(f"{node.identifier} is ready!")
+
+        @self.event
+        async def on_wavelink_track_end(player, track: wavelink.Track, reason):
+            if not player.queue.is_empty:
+                next_track = player.queue.get()
+                await player.play(next_track)
+            else:
+                await player.disconnect()
 
         @self.event
         async def on_message(msg):
 
             if msg.author == self.user:
                 return
-            await self.leveling.add_message_xp(msg.guild.id, msg.author.id)
+            await self.leveling.add_message_xp(msg.guild, msg.author)
 
             if msg.author.id not in self.leveling.ignoring_user_list:
                 self.leveling.ignoring_user_list.append(msg.author.id)

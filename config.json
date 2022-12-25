@@ -1,6 +1,6 @@
 {
   "TOKEN" : "ODYwODA3ODc5NDE3NTI4MzIx.G8IL1T.IoPoLzzGIPpQr4UZNypmh8vR1JpEkcYe_-9CEk",
-  "DATABASE" : "Paimon",
+  "DATABASE" : "paimon",
   "POSTGRESQL_USER" : "postgres",
   "POSTGRESQL_PASS" : "8080",
   "HOST" : "127.0.0.1",

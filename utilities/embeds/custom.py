@@ -1,22 +1,14 @@
 import discord
 
 
-class Custom_Embed:
-    def construct(self, interaction: discord.Interaction, title: str, description: str, color:int = None, image_url: str = None, footer_text: str = None,
+class Custom_Embed(discord.Embed):
+    def __init__(self, interaction: discord.Interaction, title: str, description: str, color:int = None, image_url: str = None,
                   tumbnail_url: str = None) -> discord.Embed:
-        embed = discord.Embed(
-            title=title,
-            description=description,
-            color=color,
-        ).set_author(
-            name=interaction.user,
-            icon_url=interaction.user.avatar
-        ).set_image(
-            url=image_url
-        ).set_footer(
-            text=footer_text
-        ).set_thumbnail(
-            url=tumbnail_url
-        )
+        super().__init__()
+        self.title = title
+        self.description = description
+        self.color = color
+        self.set_image(url=image_url)
+        self.set_thumbnail(url=tumbnail_url)
+        self.set_author(name=interaction.user, icon_url=interaction.user.avatar)
 
-        return embed

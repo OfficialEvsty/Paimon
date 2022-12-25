@@ -1,0 +1,16 @@
+{
+  "background_size" : [1080, 600],
+  "text_fill" : [255, 255, 255, 255],
+  "font_path" : "utilities/fonts/zh-cn.ttf",
+  "font_big_size" : 48,
+  "font_medium_size" : 36,
+  "font_small_size" : 24,
+  "text_fill" : [255, 255, 255, 255],
+
+  "portret_size_k" : [150, 150],
+  "portret_paddings_k" : [0.0973125, 0.1559375],
+  "mode" : "RGBA",
+  "exp_img_path" : "utilities/card_fillers/EXP.png",
+  "exp_img_size_k" : [0.2, 0.2],
+  "exp_img_paddings_k" : [0.3, 0.5]
+}

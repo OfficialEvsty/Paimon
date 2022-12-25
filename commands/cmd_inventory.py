@@ -1,27 +1,150 @@
 import discord
+from discord.webhook import Webhook
+import commands.cmd_main
+import item_system.item
+
+from utilities.embeds.inventory import Inventory_Embed
 from item_system.generator import Generator
 from item_system.inventory import Inventory
+from item_system.item import Item
 from item_system.inventory_gui import Inventory_GUI as GUI
+from bot_ui_kit.ui_inventory_interaction import UI_InventoryView
 from bot import Bot
 
-async def buy_item(interaction: discord.Interaction, item_type: bytes):
-    """conditions = await Bot.db.filter("AND", {"user_id": interaction.user.id, "guild": interaction.guild.id})
-    await Bot.db.add_db(table="items", conditions_str=conditions,
-                        dict_col_val={"user_id": interaction.user.id, "guild": interaction.guild.id, "type": item_type})"""
 
-    #await interaction.response.send_message(inventory.show())
+async def switch_page(inventory: Inventory, is_going_to_right_page: bool) -> bool:
+    return await inventory.switch_page(is_going_to_right_page)
 
 
-async def show_inventory(interaction: discord.Interaction):
-    condition_pattern = "AND"
-    conditions_dict = {"user_id": interaction.user.id, "guild": interaction.guild.id}
-    list_column = ["id", "type"]
-    records_item = await Bot.db.get_db(table="items",
-                                       conditions_str=await Bot.db.filter(condition_pattern, conditions_dict),
-                                       list_col_to_get=list_column)
+async def show_inventory(interaction: discord.Interaction, is_private: bool):
 
-    inventory = Inventory(Generator.create_items(Generator.to_list(records_item)))
-    gui = GUI(inventory.list_items)
+    owner_id = interaction.user.id
+    records_item = await Inventory.get_inventory(interaction)
+
+    if records_item:
+        inventory = Inventory(Generator.create_items(Generator.to_list(records_item)))
+        gui = GUI(inventory.list_items_on_page)
+        buffer = gui.draw()
+
+        ui = UI_InventoryView(inventory, owner_id)
+        view = ui.create_select()
+
+        file = discord.File(fp=buffer, filename="inventory.png")
+
+        description = "Выберите предмет, чтобы увидеть его описание."
+
+        embed = Inventory_Embed(
+            interaction=interaction,
+            description=description,
+            image_url=f"attachment://inventory.png"
+        )
+
+        await interaction.response.defer(ephemeral=is_private)
+        if interaction.message:
+            message_id = interaction.message.id
+            return await interaction.followup.edit_message(message_id=message_id, attachments=[file], embed=embed, view=view)
+
+        await interaction.followup.send(file=file, embed=embed, view=view)
+    else:
+        await interaction.response.send_message("Ваш инвентарь пуст.")
+
+
+async def show_trade_inventory(interaction: discord.Interaction, view: discord.ui.View, items: [] = None, items_to_trade: [] = None,
+                               inventory: Inventory = None):
+    if items is None and items_to_trade is None:
+        records_item = await Inventory.get_inventory(interaction)
+        inventory = Inventory(Generator.create_items(Generator.to_list(records_item)))
+        gui = GUI(inventory.list_items_on_page, items_to_trade)
+        buffer = gui.draw()
+
+        file = discord.File(fp=buffer, filename="inventory.png")
+        description = "Выберите предмет, чтобы добавить его в трейд лист."
+        embed = Inventory_Embed(
+            interaction=interaction,
+            description=description,
+            image_url=f"attachment://inventory.png"
+        )
+        await interaction.response.defer()
+        if interaction.message:
+            message_id = interaction.message.id
+            return await interaction.followup.edit_message(message_id=message_id, embeds=[embed], attachments=[file], view=view)
+    elif items_to_trade is not None:
+
+        gui = GUI(list_items=items, list_items_to_trade=inventory.items_to_trade)
+        buffer = gui.draw()
+
+        file = discord.File(fp=buffer, filename="inventory.png")
+
+        description = "Подтвердите трейд лист, чтобы опубликовать трейд в этом канале или отментие его."
+        embed = Inventory_Embed(
+            interaction=interaction,
+            description=description,
+            image_url=f"attachment://inventory.png"
+        )
+        await interaction.response.defer()
+        if interaction.message:
+            message_id = interaction.message.id
+            return await interaction.followup.edit_message(message_id=message_id, embed=embed, attachments=[file], view=view)
+
+
+async def on_switch_page(interaction: discord.Interaction, items_page: [], view: discord.ui.View, inventory: Inventory):
+    gui = GUI(list_items=items_page, list_items_to_trade=inventory.items_to_trade)
     buffer = gui.draw()
+    file = discord.File(fp=buffer, filename="inventory.png")
+    description = "Подтвердите трейд лист, чтобы опубликовать трейд в этом канале или отментие его."
+    embed = Inventory_Embed(
+        interaction=interaction,
+        description=description,
+        image_url=f"attachment://inventory.png"
+    )
+    await interaction.response.defer()
+    if interaction.message:
+        message_id = interaction.message.id
+        return await interaction.followup.edit_message(message_id=message_id, attachments=[file], embed=embed, view=view)
 
-    return await interaction.response.send_message(file=discord.File(fp=buffer, filename="inventory.png"))
+
+async def on_switch_page_select(interaction: discord.Interaction, view: discord.ui.View, inventory: Inventory):
+    gui = GUI(list_items=inventory.list_items_on_page)
+    buffer = gui.draw()
+    file = discord.File(fp=buffer, filename="inventory.png")
+    description = "Выберите предмет, чтобы увидеть его описание."
+    embed = Inventory_Embed(
+        interaction=interaction,
+        description=description,
+        image_url=f"attachment://inventory.png"
+    )
+    await interaction.response.defer()
+    if interaction.message:
+        message_id = interaction.message.id
+        return await interaction.followup.edit_message(message_id=message_id, attachments=[file], embed=embed, view=view)
+
+
+
+
+async def draw_inventory_edit(interaction: discord.Interaction, list_items: [], chosen_item: int, view: discord.ui.View):
+    user_called_id = interaction.user.id
+    if len(list_items) > 0:
+        gui = GUI(list_items)
+        buffer = gui.draw(chosen_item=chosen_item)
+
+        embed = Inventory_Embed(
+            interaction=interaction,
+            description=list_items[chosen_item].description,
+            image_url=f"attachment://inventory.png"
+        )
+
+        inventory_msg = await interaction.response.edit_message(embed=embed, attachments=[discord.File(fp=buffer, filename="inventory.png")], view=view)
+    else:
+        await interaction.response.send_message("Ваш инвентарь пуст.")
+    #return inventory_msg
+
+
+async def drop(interaction: discord.Interaction, item: item_system.item.Item):
+    await Inventory.remove_item(interaction, item.id)
+
+
+async def trade(interaction: discord.Interaction, inventory: Inventory):
+    guild = interaction.guild
+    items = inventory.items_to_trade
+    await Inventory.withdraw_items_from_inventory(guild, items)
+    pass

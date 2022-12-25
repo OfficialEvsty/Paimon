@@ -9,19 +9,37 @@ class Database:
         self.password = password
         self.host = host
         self.port = port
-        self.str_connection = f"postgres://{self.user}:{self.password}@{self.host}:{self.port}/{self.name}"
+
+    str_connection = ""
 
     #Должна существовать бд Paimon
 
     async def connect(self) -> None:
-        self.conn = await asyncpg.connect(dsn=f"postgres://{self.user}:{self.password}@{self.host}:{self.port}/{self.name}")
+        Database.str_connection = f"postgres://{self.user}:{self.password}@{self.host}:{self.port}/{self.name}"
+        self.conn = await asyncpg.connect(
+            dsn=f"postgres://{self.user}:{self.password}@{self.host}:{self.port}")
+
+        # is_db_paimon_exists = "SELECT * FROM pg_catalog.pg_database"
+        # exists = await self.conn.fetch(is_db_paimon_exists)
+        try:
+            await self.conn.execute("CREATE DATABASE paimon")
+        except:
+            print("Database already created.")
+
+        await self.conn.close()
+
+        self.conn = await asyncpg.connect(
+            dsn=f"postgres://{self.user}:{self.password}@{self.host}:{self.port}/{self.name}")
+
         print("Database opened successfully")
         on_create_table_users_query = 'CREATE TABLE IF NOT EXISTS users (' \
                                          'guild BIGINT NOT NULL, ' \
                                          'id BIGINT NOT NULL, ' \
                                          'rank INT NULL DEFAULT 1,' \
-                                         ' xp INT NULL DEFAULT 0,' \
+                                         'xp INT NULL DEFAULT 0,' \
                                          'uid INT NULL, ' \
+                                         "namecard VARCHAR(200) NULL DEFAULT 'Default', " \
+                                         "vision VARCHAR(50) NULL, " \
                                          'coins BIGINT NOT NULL DEFAULT 0, ' \
                                          'bio VARCHAR(100) NULL);'
         on_create_table_items_query ='CREATE TABLE IF NOT EXISTS items (' \
@@ -30,9 +48,22 @@ class Database:
                                          'user_id BIGINT NOT NULL, ' \
                                          'type SMALLINT NOT NULL, ' \
                                          'PRIMARY KEY(id)); '
+        on_create_table_namecards_query ='CREATE TABLE IF NOT EXISTS namecards (' \
+                                         'id SERIAL NOT NULL, ' \
+                                         'user_id BIGINT NOT NULL, ' \
+                                         'namecard VARCHAR(100) NOT NULL, ' \
+                                         'PRIMARY KEY(id));'
 
+        on_create_table_guilds_guery = 'CREATE TABLE IF NOT EXISTS guilds (' \
+                                       'id BIGINT NOT NULL, ' \
+                                       'users_notify_channel_id BIGINT NULL, ' \
+                                       'transactions_channel_id BIGINT NULL, ' \
+                                       'PRIMARY KEY(id));'
+
+        await self.conn.fetch(on_create_table_namecards_query)
         await self.conn.fetch(on_create_table_users_query)
         await self.conn.fetch(on_create_table_items_query)
+        await self.conn.fetch(on_create_table_guilds_guery)
         await self.conn.close()
 
     async def fetch(self, sql: str) -> list:
@@ -128,7 +159,7 @@ class Database:
 
     async def delete(self, table: str, conditions_str: str):
         delete_query = f"DELETE FROM {table} WHERE {conditions_str}"
-        self.fetch(delete_query)
+        await self.fetch(delete_query)
 
     async def add_db(self, table: str, conditions_str: str, dict_col_val: {}) -> bool:
         columns_string = ""
