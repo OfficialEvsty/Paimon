@@ -54,7 +54,7 @@ async def set_transactions_channel_id(interaction: discord.Interaction, is_disab
     print(f"Channel {channel_id} set up as transactions channel.")
 
 
-async def get_notifications_channel(guild: discord.Guild) -> int:
+async def get_notifications_channel(guild: discord.Guild) -> discord.TextChannel:
     conn = await asyncpg.connect(Database.str_connection)
     select_notifications_channel_id_query = f"SELECT users_notify_channel_id FROM guilds WHERE id = {guild.id}"
     result = await conn.fetch(select_notifications_channel_id_query)
@@ -64,7 +64,7 @@ async def get_notifications_channel(guild: discord.Guild) -> int:
         return None
     for channel in guild.channels:
         if channel.id == channel_id:
-            return channel_id
+            return channel
     return None
 
 

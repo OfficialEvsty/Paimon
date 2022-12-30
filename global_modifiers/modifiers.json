@@ -1,0 +1,24 @@
+{
+  "default_money_earn" : 1,
+  "default_exp_earn" : 1,
+
+  "premium_money_earn" : 0.5,
+  "premium_exp_earn" : 0.5,
+
+  "geo_god_vision_exp_earn" : 0.2,
+  "cryo_god_vision_exp_earn" : 0.3,
+  "pyro_god_vision_exp_earn" : 0.4,
+  "gydro_god_vision_exp_earn" : 0.5,
+  "electro_god_vision_exp_earn" : 0.6,
+  "anemo_god_vision_exp_earn" : 0.7,
+  "dendro_god_vision_exp_earn" : 0.8,
+
+
+  "geo_god_vision_money_earn" : 0.8,
+  "cryo_god_vision_money_earn" : 0.7,
+  "pyro_god_vision_money_earn" : 0.6,
+  "gydro_god_vision_money_earn" : 0.5,
+  "electro_god_vision_money_earn" : 0.4,
+  "anemo_god_vision_money_earn" : 0.3,
+  "dendro_god_vision_money_earn" : 0.2
+}

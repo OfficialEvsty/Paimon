@@ -20,6 +20,7 @@ class LevelUp_GUI:
         self.exp_img_size_k = cfg['exp_img_size_k']
         self.exp_img_paddings_k = cfg['exp_img_paddings_k']
         self.text_fill = cfg['text_fill']
+        self.bg_path = cfg['bg_path']
 
 
     def draw(self, user: str, rank: int, profile_bytes: BytesIO) -> BytesIO:
@@ -27,6 +28,7 @@ class LevelUp_GUI:
         # Загрузка шаблонных изображений.
 
         im = Image.new(self.mode, size=(self.background_size[0], self.background_size[1]))
+
         profile_bytes = Image.open(profile_bytes).convert(self.mode)
 
         exp_sign = Image.open(self.exp_img_path).convert(self.mode)

@@ -2,7 +2,7 @@ import discord
 from discord.webhook import Webhook
 import commands.cmd_main
 import item_system.item
-
+from trade_system.trade import Trade
 from utilities.embeds.inventory import Inventory_Embed
 from item_system.generator import Generator
 from item_system.inventory import Inventory
@@ -39,7 +39,8 @@ async def show_inventory(interaction: discord.Interaction, is_private: bool):
             image_url=f"attachment://inventory.png"
         )
 
-        await interaction.response.defer(ephemeral=is_private)
+        if interaction.response:
+            await interaction.response.defer(ephemeral=is_private)
         if interaction.message:
             message_id = interaction.message.id
             return await interaction.followup.edit_message(message_id=message_id, attachments=[file], embed=embed, view=view)
@@ -143,8 +144,13 @@ async def drop(interaction: discord.Interaction, item: item_system.item.Item):
     await Inventory.remove_item(interaction, item.id)
 
 
-async def trade(interaction: discord.Interaction, inventory: Inventory):
+async def trade(interaction: discord.Interaction, inventory: Inventory, money: int, timer: int = None):
+    user = interaction.user
     guild = interaction.guild
     items = inventory.items_to_trade
+
+    trade_query = Trade(owner_user=user, items=items, money=money, timer=timer)
+
     await Inventory.withdraw_items_from_inventory(guild, items)
-    pass
+
+    await trade_query.create_trade(interaction)

@@ -1,0 +1,33 @@
+{
+  "font_path" : "utilities/fonts/zh-cn.ttf",
+  "font_big_size" : 48,
+  "font_medium_size" : 36,
+  "font_small_size" : 24,
+  "text_fill" : [255, 255, 255, 255],
+
+
+  "money_text_paddings_k" : [0.5, 0,5],
+  "portret_size_k" : [224, 224],
+  "portret_paddings_k" : [0.0973125, 0.1559375],
+  "mode" : "RGBA",
+  "backgrounds_path" : "utilities/card_backgrounds/",
+  "visions_source_path" : "item_system/item_images/visions/",
+  "background_size" : [1092, 520],
+  "format_file_bg" : ".png",
+
+  "rarity" :
+  {
+      "default" : "utilities/inventory_images/usual.png",
+      "unusual" : "utilities/inventory_images/unusual.png",
+      "rare" : "utilities/inventory_images/rare.png",
+      "legend" : "utilities/inventory_images/legend.png",
+      "special" : "utilities/inventory_images/special.png"
+  },
+
+  "panel_item_holders_paddings_k" : [0.05, 0.8],
+  "panel_item_holders_size_k" : 0.16,
+  "panel_items_size" : 10,
+  "panel_interval_btw_holders_k" : 0.01
+
+
+}

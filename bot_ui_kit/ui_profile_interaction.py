@@ -138,13 +138,16 @@ class UI_ProfileView:
             if self.owner_id == interaction.user.id:
                 cards_list = await commands.cmd_profile.cmd_get_user_cards(interaction)
                 select_menu_cards = discord.ui.Select()
-                for i in range(len(cards_list)):
-                    select_menu_cards.add_option(label=cards_list[i], value=i, description="")
+                len_cards_list = len(cards_list)
+                if len_cards_list == 0:
+                    return await interaction.response.send_message("У вас нету ни одной именной карты, используйте их в инвентаре, чтобы они появились здесь.", delete_after=5, ephemeral=True)
+                for i in range(len_cards_list):
+                    select_menu_cards.add_option(label=cards_list[i], value=str(i), description="")
+
 
                 async def on_selected_card(interaction: discord.Interaction):
                     if self.owner_id == interaction.user.id:
                         index = int(select_menu_cards.values[0])
-                        print(type(cards_list))
 
                         chosen_card = cards_list[index]
                         await commands.cmd_profile.cmd_update_user_namecard(interaction, chosen_card)

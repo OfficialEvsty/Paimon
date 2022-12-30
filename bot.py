@@ -4,7 +4,7 @@ import discord
 import json
 import discord.app_commands
 import asyncio
-
+from global_modifiers.modifier import Modifier
 import music.custom_music
 from leveling import Leveling
 from data.database import Database
@@ -98,3 +98,21 @@ class Bot(discord.Client):
                 print(self.leveling.ignoring_user_list)
                 await asyncio.sleep(self.leveling.ignoring_time)
                 self.leveling.ignoring_user_list.remove(msg.author.id)
+
+        @self.event
+        async def on_voice_state_update(member: discord.Member, before: discord.VoiceState, after: discord.VoiceState):
+            if before.channel is None and after.channel is not None and member.id is not self.user.id:
+                Leveling.users_in_vc.append(member)
+                await self.leveling.check_vc_for_user()
+
+                print(Leveling.users_in_vc)
+            if before.channel is not None and after.channel is None and member.id is not self.user.id:
+                if member in Leveling.users_in_vc:
+                    Leveling.users_in_vc.remove(member)
+                    await self.leveling.check_vc_for_user()
+
+            modifier = Modifier(member)
+            await modifier.init()
+            modifiered_xp = int(modifier.exp_modifier)
+            modifiered_money = int(modifier.money_modifier)
+            print(modifiered_xp, modifiered_money)

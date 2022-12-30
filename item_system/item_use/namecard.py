@@ -14,7 +14,7 @@ async def namecard(interaction: discord.Interaction, item: Item):
     user_id = user.id
     Bot.db.conn = await asyncpg.connect(Bot.db.str_connection)
     on_insert_name_query = f"INSERT INTO namecards (user_id, namecard) SELECT {user_id}, '{name}' " \
-                           f"WHERE NOT EXISTS (SELECT namecard FROM namecards WHERE namecard = '{name}' AND id = {user_id});"
+                           f"WHERE NOT EXISTS (SELECT namecard FROM namecards WHERE namecard = '{name}' AND user_id = {user_id});"
     await Bot.db.conn.fetch(on_insert_name_query)
     await Bot.db.conn.close()
 

@@ -22,4 +22,4 @@ async def balance(interaction: discord.Interaction, user: discord.User = None) -
     guild = interaction.guild
     current_money = await get_money_db(user, guild)
     embed = Money_Embed(user, current_money)
-    return await interaction.response.send_message(file=embed.file, embed=embed)
+    return await interaction.response.send_message(embed=embed)

@@ -74,16 +74,32 @@ class UI_InventoryView:
         async def on_accept_callback(interaction: discord.Interaction):
             async def on_submit_cost(interaction: discord.Interaction):
                 value = input_money_box.value
+                timer = input_timer_box.value
+                min_timer = 180
                 if value.isdigit():
-                    await commands.cmd_inventory.trade(interaction, self.inventory)
-                    await commands.cmd_inventory.show_inventory(interaction, True)
+                    if (timer.isdigit() and int(timer) >= min_timer) or timer == "":
+                        if timer == "":
+                            timer = min_timer
+                        else:
+                            timer = int(timer)
+                        if int(value) < 0:
+                            value = abs(int(value))
+                        await commands.cmd_inventory.trade(interaction, self.inventory, value, timer)
+                        await commands.cmd_inventory.show_inventory(interaction, True)
+                    else:
+                        await interaction.response.send_message("Значение поля `время` должно быть числовым и не меньше, чем 3 минуты(180).", delete_after=5, ephemeral=True)
                 else:
                     await interaction.response.send_message("Значение поля `цена` должно быть числовым типом.", delete_after=5, ephemeral=True)
 
             if self.owner_id == interaction.user.id:
+                if len(self.inventory.items_to_trade) == 0:
+                    await interaction.response.send_message("Поместите в трейд лист предметы, чтобы выставить его на продажу.", delete_after=5, ephemeral=True)
                 modal_money_to_cost = discord.ui.Modal(title="Установить цену для трейда")
                 input_money_box = discord.ui.TextInput(label="Цена", style=discord.TextStyle.short, default="0", required=True)
+                input_timer_box = discord.ui.TextInput(label="Укажите время жизни трейда", max_length=4, placeholder="Время в секундах", style=discord.TextStyle.short,
+                                                       required=False)
                 modal_money_to_cost.add_item(input_money_box)
+                modal_money_to_cost.add_item(input_timer_box)
                 modal_money_to_cost.on_submit = on_submit_cost
                 await interaction.response.send_modal(modal_money_to_cost)
 
@@ -191,12 +207,12 @@ class UI_InventoryView:
 
                             select_menu_offer.max_values = len(self.inventory.list_items_on_page)
                             for i in range(len(self.inventory.list_items_on_page)):
-                                print(f"{i} : {self.inventory.list_items_on_page[i].name}")
                                 select_menu_offer.add_option(
                                     label=self.inventory.list_items_on_page[i].name,
                                     value=str(i)
                                 )
                             select_menu_offer.callback = on_trade_items_selected
+
 
                             view.remove_item(self.right_arrow_button)
                             self.right_arrow_button.disabled = not is_right_but_valid
@@ -206,6 +222,8 @@ class UI_InventoryView:
                             view.add_item(self.revert_button)
                             view.add_item(self.right_arrow_button)
                             view.add_item(select_menu_offer)
+                            if len(self.inventory.list_items) == 0:
+                                view.remove_item(select_menu_offer)
                             await commands.cmd_inventory.show_trade_inventory(interactions, view, items_in_inventory,
                                                                               items_for_trade_list, self.inventory)
                         select_menu_offer = discord.ui.Select(
@@ -274,6 +292,8 @@ class UI_InventoryView:
                             view.add_item(self.revert_button)
                             view.add_item(self.right_arrow_button)
                             view.add_item(select_menu_offer)
+                            if len(self.inventory.list_items) == 0:
+                                view.remove_item(select_menu_offer)
                             await commands.cmd_inventory.show_trade_inventory(interactions, view, items_in_inventory,
                                                                               items_for_trade_list, self.inventory)
 
@@ -334,6 +354,8 @@ class UI_InventoryView:
                     view.add_item(self.revert_button)
                     view.add_item(self.right_arrow_button)
                     view.add_item(select_menu_offer)
+                    if len(self.inventory.list_items) == 0:
+                        view.remove_item(select_menu_offer)
                     await commands.cmd_inventory.show_trade_inventory(interactions, view, items_in_inventory,
                                                                       items_for_trade_list, self.inventory)
 
@@ -344,7 +366,8 @@ class UI_InventoryView:
                 view.add_item(self.revert_button)
                 view.add_item(self.right_arrow_button)
                 view.add_item(select_menu_offer)
-
+                if len(self.inventory.list_items) == 0:
+                    view.remove_item(select_menu_offer)
                 await commands.cmd_inventory.show_trade_inventory(interaction, view, inventory=self.inventory)
 
         trade_button.callback = on_trade_button_callback

@@ -14,10 +14,10 @@ async def level_up_gui(guild: discord.Guild, user: discord.User, rank: int) -> N
     gui = LevelUp_GUI()
     buffer = gui.draw(str(user), rank, BytesIO(profile_bytes))
     dFile = discord.File(fp=buffer, filename="level_up_img.png")
-    channel_id = await get_notifications_channel(guild)
-    if channel_id is None:
+    channel = await get_notifications_channel(guild)
+    if channel is None:
         return
-    channel = guild.get_channel(channel_id)
+    channel = channel
     await channel.send(file=dFile)
 
 

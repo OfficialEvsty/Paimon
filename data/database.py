@@ -60,10 +60,18 @@ class Database:
                                        'transactions_channel_id BIGINT NULL, ' \
                                        'PRIMARY KEY(id));'
 
+        on_create_table_premium_users_query = 'CREATE TABLE IF NOT EXISTS premium_users (' \
+                                              'id SERIAL NOT NULL, ' \
+                                              'user_id BIGINT NOT NULL, ' \
+                                              'is_premium BOOLEAN DEFAULT FALSE, ' \
+                                              'PRIMARY KEY(id));' \
+
+
         await self.conn.fetch(on_create_table_namecards_query)
         await self.conn.fetch(on_create_table_users_query)
         await self.conn.fetch(on_create_table_items_query)
         await self.conn.fetch(on_create_table_guilds_guery)
+        await self.conn.fetch(on_create_table_premium_users_query)
         await self.conn.close()
 
     async def fetch(self, sql: str) -> list:
