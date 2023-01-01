@@ -59,12 +59,21 @@ async def get_notifications_channel(guild: discord.Guild) -> discord.TextChannel
     select_notifications_channel_id_query = f"SELECT users_notify_channel_id FROM guilds WHERE id = {guild.id}"
     result = await conn.fetch(select_notifications_channel_id_query)
     await conn.close()
-    channel_id = result[0][0]
-    if channel_id is None:
-        return None
-    for channel in guild.channels:
-        if channel.id == channel_id:
-            return channel
+    if result:
+        for channel in guild.channels:
+            if channel.id == result[0][0]:
+                return channel
+    return None
+
+async def get_transactions_channel(guild: discord.Guild) -> discord.TextChannel:
+    conn = await asyncpg.connect(Database.str_connection)
+    select_transactions_channel_id_query = f"SELECT transactions_channel_id FROM guilds WHERE id = {guild.id}"
+    result = await conn.fetch(select_transactions_channel_id_query)
+    await conn.close()
+    if result:
+        for channel in guild.channels:
+            if channel.id == result[0][0]:
+                return channel
     return None
 
 

@@ -7,11 +7,13 @@ import asyncio
 from global_modifiers.modifier import Modifier
 import music.custom_music
 from leveling import Leveling
+from premium_system.premium import check_premium
 from data.database import Database
 import utilities.card_backgrounds.logic.Cards as utilities
 from item_system.generator import Generator
 import shop_system.market
-
+import asyncpg
+import schedule
 import aiohttp
 
 
@@ -27,6 +29,10 @@ class Config:
         self.max_xp_msg = cfg['MAX_XP_MSG']
         self.ignoring_xp_time = cfg['IGNORING_XP_TIME']
 
+async def time_pending():
+    while True:
+        schedule.run_pending()
+        await asyncio.sleep(1)
 
 class Bot(discord.Client):
 
@@ -73,6 +79,8 @@ class Bot(discord.Client):
                 password="www.freelavalink.ga"
             )
             print("We have logged in as {0.user}".format(self))
+            schedule.every().day.at("21:31").do(check_premium)
+            await time_pending()
 
         @self.event
         async def on_wavelink_node_ready(node: wavelink.Node):
@@ -100,19 +108,42 @@ class Bot(discord.Client):
                 self.leveling.ignoring_user_list.remove(msg.author.id)
 
         @self.event
+        async def on_member_join(member: discord.Member):
+            conn = await asyncpg.connect(Bot.db.str_connection)
+            sql_add_new_user_in_db_query = f"DO $$ " \
+                                                f"BEGIN " \
+                                                    f"IF NOT EXISTS (" \
+                                                        f"SELECT * FROM users " \
+                                                        f"WHERE id = {member.id} AND guild = {member.guild.id}) THEN " \
+                                                            f"INSERT INTO users (id, guild) VALUES ({member.id}, {member.guild.id}) " \
+                                                f"END IF; " \
+                                           f"END $$;"
+            await conn.fetch(sql_add_new_user_in_db_query)
+            await conn.close()
+
+        @self.event
+        async def on_member_leave(member: discord.Member):
+            conn = await asyncpg.connect(Bot.db.str_connection)
+            sql_remove_user_in_db_query = f"DO $$ " \
+                                                f"BEGIN " \
+                                                    f"IF EXISTS (" \
+                                                        f"SELECT * FROM users " \
+                                                        f"WHERE id = {member.id} AND guild = {member.guild.id}) THEN " \
+                                                            f"DELETE FROM users WHERE id = {member.id} AND guild = {member.guild.id} " \
+                                                    f"END IF; " \
+                                                f"END $$;"
+            await conn.fetch(sql_remove_user_in_db_query)
+            await conn.close()
+
+
+        @self.event
         async def on_voice_state_update(member: discord.Member, before: discord.VoiceState, after: discord.VoiceState):
             if before.channel is None and after.channel is not None and member.id is not self.user.id:
                 Leveling.users_in_vc.append(member)
                 await self.leveling.check_vc_for_user()
 
-                print(Leveling.users_in_vc)
             if before.channel is not None and after.channel is None and member.id is not self.user.id:
                 if member in Leveling.users_in_vc:
                     Leveling.users_in_vc.remove(member)
                     await self.leveling.check_vc_for_user()
 
-            modifier = Modifier(member)
-            await modifier.init()
-            modifiered_xp = int(modifier.exp_modifier)
-            modifiered_money = int(modifier.money_modifier)
-            print(modifiered_xp, modifiered_money)

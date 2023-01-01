@@ -53,6 +53,14 @@ class Database:
                                          'user_id BIGINT NOT NULL, ' \
                                          'namecard VARCHAR(100) NOT NULL, ' \
                                          'PRIMARY KEY(id));'
+        on_create_table_visions_query = 'CREATE TABLE IF NOT EXISTS visions (' \
+                                        'id SERIAL NOT NULL, ' \
+                                        'user_id BIGINT NOT NULL, ' \
+                                        'guild BIGINT NOT NULL, ' \
+                                        'vision VARCHAR(50) NOT NULL, ' \
+                                        'item_id BIGINT NOT NULL, ' \
+                                        'PRIMARY KEY(id),' \
+                                        'FOREIGN KEY(item_id) REFERENCES items(id) ON DELETE CASCADE);'
 
         on_create_table_guilds_guery = 'CREATE TABLE IF NOT EXISTS guilds (' \
                                        'id BIGINT NOT NULL, ' \
@@ -67,11 +75,34 @@ class Database:
                                               'PRIMARY KEY(id));' \
 
 
+        on_create_function_on_update_item_owner = 'CREATE OR REPLACE FUNCTION on_switch_vision_owner() ' \
+                                                  'RETURNS trigger AS $tab$ ' \
+                                                  'BEGIN ' \
+                                                        f'IF EXISTS (' \
+                                                        f'SELECT * FROM visions WHERE item_id = OLD.id) THEN ' \
+                                                            f'DELETE FROM visions WHERE item_id = OLD.id;' \
+                                                        f'END IF;' \
+                                                        f'RETURN NEW;' \
+                                                  f'END; ' \
+                                                  f'$tab$ LANGUAGE plpgsql'
+
+        on_create_trigger_when_item_owner_changes = 'CREATE OR REPLACE TRIGGER owner_changed_trig ' \
+                                                    'AFTER UPDATE OF user_id ON items ' \
+                                                    'FOR EACH ROW EXECUTE PROCEDURE on_switch_vision_owner();'
+
+
         await self.conn.fetch(on_create_table_namecards_query)
         await self.conn.fetch(on_create_table_users_query)
         await self.conn.fetch(on_create_table_items_query)
         await self.conn.fetch(on_create_table_guilds_guery)
         await self.conn.fetch(on_create_table_premium_users_query)
+        await self.conn.fetch(on_create_table_visions_query)
+
+
+        await self.conn.fetch(on_create_function_on_update_item_owner)
+
+        await self.conn.fetch(on_create_trigger_when_item_owner_changes)
+
         await self.conn.close()
 
     async def fetch(self, sql: str) -> list:

@@ -19,6 +19,8 @@ async def switch_page(inventory: Inventory, is_going_to_right_page: bool) -> boo
 async def show_inventory(interaction: discord.Interaction, is_private: bool):
 
     owner_id = interaction.user.id
+    if interaction.response:
+        await interaction.response.defer(ephemeral=is_private)
     records_item = await Inventory.get_inventory(interaction)
 
     if records_item:
@@ -39,8 +41,7 @@ async def show_inventory(interaction: discord.Interaction, is_private: bool):
             image_url=f"attachment://inventory.png"
         )
 
-        if interaction.response:
-            await interaction.response.defer(ephemeral=is_private)
+
         if interaction.message:
             message_id = interaction.message.id
             return await interaction.followup.edit_message(message_id=message_id, attachments=[file], embed=embed, view=view)
@@ -52,6 +53,7 @@ async def show_inventory(interaction: discord.Interaction, is_private: bool):
 
 async def show_trade_inventory(interaction: discord.Interaction, view: discord.ui.View, items: [] = None, items_to_trade: [] = None,
                                inventory: Inventory = None):
+    await interaction.response.defer()
     if items is None and items_to_trade is None:
         records_item = await Inventory.get_inventory(interaction)
         inventory = Inventory(Generator.create_items(Generator.to_list(records_item)))
@@ -65,7 +67,7 @@ async def show_trade_inventory(interaction: discord.Interaction, view: discord.u
             description=description,
             image_url=f"attachment://inventory.png"
         )
-        await interaction.response.defer()
+
         if interaction.message:
             message_id = interaction.message.id
             return await interaction.followup.edit_message(message_id=message_id, embeds=[embed], attachments=[file], view=view)
@@ -82,7 +84,7 @@ async def show_trade_inventory(interaction: discord.Interaction, view: discord.u
             description=description,
             image_url=f"attachment://inventory.png"
         )
-        await interaction.response.defer()
+
         if interaction.message:
             message_id = interaction.message.id
             return await interaction.followup.edit_message(message_id=message_id, embed=embed, attachments=[file], view=view)

@@ -15,7 +15,7 @@ class Trade:
         self.id = Trade.id
         self.owner: discord.User = owner_user
         self.items = items
-        self.cost = money
+        self.cost: int = money
         if timer is None:
             self.timer = 180
         self.timer = timer

@@ -30,8 +30,21 @@ async def vision(interaction: discord.Interaction, item: Item):
     format_file = ".png"
 
     vision_name = item.img_url.replace(path, "").replace(format_file, "")
+    item_id = item.id
 
     Bot.db.conn = await asyncpg.connect(Bot.db.str_connection)
-    on_update_vision_query = f"UPDATE users SET vision = '{vision_name}' WHERE guild = {guild} AND id = {user_id}"
-    await Bot.db.conn.fetch(on_update_vision_query)
+    on_insert_vision_query = f"DO $$ " \
+                                f"BEGIN " \
+                                    f"IF NOT EXISTS (" \
+                                        f"SELECT * FROM visions " \
+                                        f"WHERE user_id = {user_id} AND guild = {guild}) THEN " \
+                                            f"INSERT INTO visions (user_id, guild, vision, item_id) " \
+                                            f"VALUES ({user_id}, {guild}, '{vision_name}', {item_id}); " \
+                                    f"ELSE " \
+                                        f"DELETE FROM visions WHERE user_id = {user_id} AND guild = {guild};" \
+                                        f"INSERT INTO visions (user_id, guild, vision, item_id) " \
+                                            f"VALUES ({user_id}, {guild}, '{vision_name}', {item_id});" \
+                                    f"END IF;" \
+                                f"END $$;"
+    await Bot.db.conn.fetch(on_insert_vision_query)
     await Bot.db.conn.close()

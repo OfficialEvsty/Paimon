@@ -11,19 +11,23 @@ from bot_ui_kit.ui_profile_interaction import UI_ProfileView
 
 async def cmd_card(interaction: discord.Interaction, user: discord.Member = None) -> None:
 
+    if interaction.message:
+        await interaction.response.defer()
+
     if user is None:
         user = interaction.user
 
     async with aiohttp.ClientSession() as session:
-        async with session.get(f'{user.avatar}?size=512') as resp:
+        async with session.get(f'{user.avatar}?size=1024') as resp:
             profile_bytes = await resp.read()
-    table = "users"
     guild_id = interaction.guild.id
     user_id = user.id
-    cols_list = ["xp", "rank", "uid", "bio", "namecard", "vision"]
-    condition_pattern = "AND"
-    dict_conditions = {"id" : user_id, "guild" : guild_id}
-    result = await Bot.db.get_db(table, await Bot.db.filter(condition_pattern, dict_conditions), cols_list)
+    select_users_join_visions = "SELECT xp, rank, uid, bio, namecard, visions.vision " \
+                                "FROM users LEFT JOIN visions ON users.id = visions.user_id " \
+                                f"WHERE users.guild = {guild_id} AND users.id = {user_id}"
+    conn = await asyncpg.connect(Bot.db.str_connection)
+    result = await conn.fetch(select_users_join_visions)
+    await conn.close()
 
     if not result:
         return await interaction.response.send_message("Прежде чем пользоваться этой командой, хотя бы поприветствуйте всех на сервере.", delete_after=5, ephemeral=True)
@@ -48,11 +52,9 @@ async def cmd_card(interaction: discord.Interaction, user: discord.Member = None
     buffer = profilecard.draw(str(user), uid, bio, rank, xp, BytesIO(profile_bytes), card, vision)
 
     if interaction.message:
-        await interaction.response.defer()
         return await interaction.followup.edit_message(message_id=interaction.message.id, attachments=[dFile(fp=buffer, filename='rank_card.png')], view=view)
 
-    await interaction.response.defer()
-    return await interaction.followup.send(file=dFile(fp=buffer, filename='rank_card.png'), view=view)
+    return await interaction.channel.send(file=dFile(fp=buffer, filename='rank_card.png'), view=view)
 
 
 async def cmd_edit_view(interaction: discord.Interaction, view: discord.ui.View):

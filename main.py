@@ -1,11 +1,12 @@
 from discord import app_commands
 
-
+import schedule
 import shop_system.market
 from bot import Bot
 from commands.user_info import *
 import discord
 import wavelink
+import asyncio
 import commands.user_info
 import commands.cmd_profile
 import commands.cmd_main
@@ -17,6 +18,7 @@ import music.custom_music
 from item_system.inventory import Inventory
 from item_system.generator import Generator
 from rewarding.reward import Reward
+from premium_system.premium import check_premium
 
 
 
@@ -103,7 +105,14 @@ if __name__ == "__main__":
         await interaction.response.send_message(f"Уведомления о транзакциях в канале `{interaction.channel}`: `{status}`",
                                                 delete_after=10)
 
+    @bot.tree.command(name="premium", description="Выдать пользователю Premium статус. Разрешение:(Только разработчик)")
+    async def app_give_premium(interaction: discord.Interaction, user_id: int, months: int = -1):
+        if months == -1:
+            pass
+        if months <= 12 and months > 0:
+            pass
 
     bot.startup()
     bot.run(bot.cfg.token)
+
     pass

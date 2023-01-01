@@ -84,7 +84,7 @@ class UI_InventoryView:
                             timer = int(timer)
                         if int(value) < 0:
                             value = abs(int(value))
-                        await commands.cmd_inventory.trade(interaction, self.inventory, value, timer)
+                        await commands.cmd_inventory.trade(interaction, self.inventory, int(value), timer)
                         await commands.cmd_inventory.show_inventory(interaction, True)
                     else:
                         await interaction.response.send_message("Значение поля `время` должно быть числовым и не меньше, чем 3 минуты(180).", delete_after=5, ephemeral=True)

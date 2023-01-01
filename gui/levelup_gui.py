@@ -1,7 +1,7 @@
 from io import BytesIO
 from PIL import Image, ImageDraw, ImageFont, ImageFilter
 import json
-
+import random
 
 class LevelUp_GUI:
     def __init__(self) -> None:
@@ -16,27 +16,33 @@ class LevelUp_GUI:
         self.portret_paddings_k = cfg['portret_paddings_k']
         self.mode = cfg['mode']
         self.background_size = cfg['background_size']
-        self.exp_img_path = cfg['exp_img_path']
-        self.exp_img_size_k = cfg['exp_img_size_k']
-        self.exp_img_paddings_k = cfg['exp_img_paddings_k']
+        self.rank_up_img_path = cfg['rank_up_panel_img']
+        self.rank_up_img_size_k = cfg['rank_up_img_size_k']
+        self.rank_up_img_paddings_k = cfg['rank_up_img_paddings_k']
         self.text_fill = cfg['text_fill']
         self.bg_path = cfg['bg_path']
+        self.bg_collection = cfg['backgrounds_collection']
+        self.rank_up_img_path = cfg['rank_up_panel_img']
+        self.rank_text_paddings_k = cfg['rank_text_paddings_k']
+        self.rank_up_text_paddings_k = cfg['rank_up_text_paddings_k']
 
 
     def draw(self, user: str, rank: int, profile_bytes: BytesIO) -> BytesIO:
         text_filling = (self.text_fill[0], self.text_fill[1], self.text_fill[2], self.text_fill[3])
         # Загрузка шаблонных изображений.
+        background_path = self.bg_collection["bg_" + str(random.randint(1, len(self.bg_collection)))]
 
-        im = Image.new(self.mode, size=(self.background_size[0], self.background_size[1]))
+        im = Image.open(background_path)
 
         profile_bytes = Image.open(profile_bytes).convert(self.mode)
 
-        exp_sign = Image.open(self.exp_img_path).convert(self.mode)
+        rank_up_img = Image.open(self.rank_up_img_path).convert(self.mode)
 
 
         # Размерим
+        im = im.resize(size=(self.background_size[0], self.background_size[1]))
         (width, height) = im.size
-        resized_exp_sign = exp_sign.resize((int(height * self.exp_img_size_k[0]), int(height * self.exp_img_size_k[1])))
+        rank_up_img = rank_up_img.resize((int(rank_up_img.width * self.rank_up_img_size_k[0]), int(rank_up_img.height * self.rank_up_img_size_k[1])))
 
 
 
@@ -45,21 +51,30 @@ class LevelUp_GUI:
 
         # Создание кисти
         im_draw = ImageDraw.Draw(im)
+        rank_draw = ImageDraw.Draw(rank_up_img)
 
         # Наложение изображения профиля на баннер.
         im.paste(im=portret, box=(int(self.portret_paddings_k[0] * width), int(self.portret_paddings_k[1] * height)), mask=portret)
 
-        im.paste(resized_exp_sign, (int(width * self.exp_img_paddings_k[0]), int(height * self.exp_img_paddings_k[1])), resized_exp_sign)
-
-        im_draw.text((int(41 / 108 * width), int(11 / 60 * height)), user, font=self.font, fill=text_filling)
+        im_draw.text((int(self.portret_paddings_k[0] * width + portret.width * 1.2),
+                      int(self.portret_paddings_k[1] * height + portret.height // 3)), user, font=self.font,
+                     fill=text_filling)
 
 
         rank_text = f'{rank}'
-        im_draw.text((int(96 / 108 * width), int(33 / 60 * height)), rank_text, font=self.font, fill=text_filling)
+        rank_draw.text((int(rank_up_img.width * self.rank_text_paddings_k[0]),
+                       int(rank_up_img.height * self.rank_text_paddings_k[1])), rank_text, font=self.font,
+                       fill=text_filling, anchor="ms")
 
         rank_text_label = "Rank Up!"
-        im_draw.text((int(40 / 108 * width), int(34 / 60 * height)), rank_text_label, font=self.medium_font,
-                     fill=text_filling)
+        rank_draw.text((int(rank_up_img.width * self.rank_up_text_paddings_k[0]),
+                        int(rank_up_img.height * self.rank_up_text_paddings_k[1])), rank_text_label,
+                       font=self.font, fill=text_filling, anchor="ms")
+
+        left_padding = (width - rank_up_img.width) // 2
+        im.paste(rank_up_img,
+                 (int(left_padding), int(height * self.rank_up_img_paddings_k[1])),
+                 rank_up_img)
 
         buffer = BytesIO()
         im.save(buffer, 'png')

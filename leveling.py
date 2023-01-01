@@ -1,7 +1,7 @@
 import random
 import time
 import discord
-
+from transaction_system.transaction import Transaction
 from data.database import Database
 from card_profile.profile import Profile
 from random import randint
@@ -45,7 +45,10 @@ class Leveling:
                 result = await conn.fetch(f"SELECT xp, rank FROM users WHERE id = {user_id} AND guild = {guild_id}")
                 if result:
                     current_xp = result[0][0]
-                    current_xp += randint(self.min_xp_message, self.max_xp_message)
+                    xp = randint(self.min_xp_message, self.max_xp_message)
+                    exp_modifire = Modifier(user)
+                    await exp_modifire.init()
+                    current_xp += int(xp * exp_modifire.exp_modifier)
                     current_rank = result[0][1]
                     if current_xp >= Profile.neededxp(current_rank):
                         current_rank += 1
@@ -96,12 +99,19 @@ class Leveling:
         xp = random.randrange(self.min_xp_vc, self.max_xp_vc)
         money = random.randrange(self.min_money_vc, self.max_money_vc)
 
-
+        modifier = Modifier(member)
+        await modifier.init()
+        modifiered_xp = int(modifier.exp_modifier * xp)
+        modifiered_money = int(modifier.money_modifier * money)
 
         guild = member.guild
-        reward = Reward(guild, member, money=money, exp=xp)
+        reward = Reward(guild, member, money=modifiered_money, exp=modifiered_xp)
         await reward.apply()
-        print("Получил награду")
+
+
+        """reason = "Фарм в голосовом канале"
+        transaction = Transaction(member, reason, modifiered_money)
+        await transaction.send()"""
 
 
 

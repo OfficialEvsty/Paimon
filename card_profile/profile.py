@@ -111,8 +111,8 @@ class Profile:
 
         count_chars_on_row = 25
         bio = string_cuts_on_rows(bio, count_chars_on_row)
-        bio_text_position = (int(43 / 108 * width), int(19 / 60 * height))
-        im_draw.text(bio_text_position, bio, font=self.small_font, fill=text_filling)
+        bio_text_position = (int(60 / 108 * width), int(22 / 60 * height))
+        im_draw.text(bio_text_position, bio, font=self.small_font, fill=text_filling, anchor="ms")
 
         buffer = BytesIO()
         im.save(buffer, 'png')
