@@ -4,6 +4,7 @@ from io import BytesIO
 from bot_ui_kit.ui_trade_interaction import UI_Trade_View
 from gui.trade_gui import Trade_GUI
 from commands.cmd_guild_settings import get_notifications_channel
+from trade_system.trade_embed import Trade_Embed
 
 
 class Trade:
@@ -30,6 +31,8 @@ class Trade:
 
         buffer = Trade_GUI().draw(user, self.items, self.cost, BytesIO(profile_bytes))
         file = discord.File(fp=buffer, filename="trade.png")
+        embed = Trade_Embed(self)
+        embed.set_image(url="attachment://trade.png")
 
         if self.timer is not None:
             ui_trade = UI_Trade_View(self)
@@ -40,8 +43,8 @@ class Trade:
         channel_to_send_notification = await get_notifications_channel(interaction.guild)
 
         if channel_to_send_notification is not None:
-            msg = await channel_to_send_notification.send(file=file, view=view)
+            msg = await channel_to_send_notification.send(file=file, view=view, embed=embed)
         else:
-            msg = await interaction.channel.send(file=file, view=view)
+            msg = await interaction.channel.send(file=file, view=view, embed=embed)
         view.sourced_msg = msg
 

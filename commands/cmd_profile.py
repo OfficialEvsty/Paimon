@@ -9,10 +9,10 @@ import aiohttp
 import re
 from bot_ui_kit.ui_profile_interaction import UI_ProfileView
 
+
 async def cmd_card(interaction: discord.Interaction, user: discord.Member = None) -> None:
 
-    if interaction.message:
-        await interaction.response.defer()
+    await interaction.response.defer()
 
     if user is None:
         user = interaction.user
@@ -22,8 +22,10 @@ async def cmd_card(interaction: discord.Interaction, user: discord.Member = None
             profile_bytes = await resp.read()
     guild_id = interaction.guild.id
     user_id = user.id
-    select_users_join_visions = "SELECT xp, rank, uid, bio, namecard, visions.vision " \
-                                "FROM users LEFT JOIN visions ON users.id = visions.user_id " \
+    select_users_join_visions = "SELECT xp, rank, uid, bio, namecard, visions.vision, premium_users.id " \
+                                "FROM users " \
+                                "LEFT JOIN visions ON users.id = visions.user_id " \
+                                "LEFT JOIN premium_users ON users.id = premium_users.user_id " \
                                 f"WHERE users.guild = {guild_id} AND users.id = {user_id}"
     conn = await asyncpg.connect(Bot.db.str_connection)
     result = await conn.fetch(select_users_join_visions)
@@ -38,6 +40,7 @@ async def cmd_card(interaction: discord.Interaction, user: discord.Member = None
     bio = result[0][3]
     card = result[0][4]
     vision = result[0][5]
+    premium = result[0][6]
 
     if uid is None:
         uid = "Не ввёден"
@@ -46,15 +49,15 @@ async def cmd_card(interaction: discord.Interaction, user: discord.Member = None
     if vision is None:
         vision = None
 
-    view = UI_ProfileView(user_id=user_id).create_view()
+    view = await UI_ProfileView(user=user).create_view()
 
     profilecard = Profile()
-    buffer = profilecard.draw(str(user), uid, bio, rank, xp, BytesIO(profile_bytes), card, vision)
+    buffer = profilecard.draw(str(user), uid, bio, rank, xp, BytesIO(profile_bytes), card, vision, premium)
 
     if interaction.message:
         return await interaction.followup.edit_message(message_id=interaction.message.id, attachments=[dFile(fp=buffer, filename='rank_card.png')], view=view)
 
-    return await interaction.channel.send(file=dFile(fp=buffer, filename='rank_card.png'), view=view)
+    return await interaction.followup.send(file=dFile(fp=buffer, filename='rank_card.png'), view=view)
 
 
 async def cmd_edit_view(interaction: discord.Interaction, view: discord.ui.View):

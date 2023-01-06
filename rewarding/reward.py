@@ -68,8 +68,11 @@ class Reward:
 async def level_up_reward(guild, user):
     min_money = 50
     max_money = 500
+    min_count = 1
+    max_count = 9
     money = random.randrange(min_money, max_money)
-    items = Generator.generate_random_items_by_group_type("namecard", 1)
+    count_wishes = random.randint(min_count, max_count)
+    items = Generator.generate_random_items_by_group_type("wishing", count_wishes)
     reward = Reward(guild=guild, user=user, money=money, items=items)
     transaction_reward_for_level_up = Transaction(user, reason="Награда за повышение ранга.", money=money, received_items=items)
     await transaction_reward_for_level_up.send()

@@ -2,8 +2,8 @@
   "default_money_earn" : 1,
   "default_exp_earn" : 1,
 
-  "premium_money_earn" : 0.5,
-  "premium_exp_earn" : 0.5,
+  "premium_money_earn" : 1,
+  "premium_exp_earn" : 1,
 
   "geo_god_vision_exp_earn" : 0.2,
   "cryo_god_vision_exp_earn" : 0.3,

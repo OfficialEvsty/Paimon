@@ -9,12 +9,14 @@ import music.custom_music
 from leveling import Leveling
 from premium_system.premium import check_premium
 from data.database import Database
+from bot_ui_kit.ui_music_interaction import UI_MusicView
 import utilities.card_backgrounds.logic.Cards as utilities
 from item_system.generator import Generator
 import shop_system.market
 import asyncpg
 import schedule
 import aiohttp
+from discord.ext import commands, ipc
 
 
 class Config:
@@ -54,7 +56,6 @@ class Bot(discord.Client):
         self.leveling = Leveling(self.cfg.min_xp_msg, self.cfg.max_xp_msg, self.cfg.ignoring_xp_time)
 
         utilities.init_cards_list()
-        print(utilities.cards_list)
 
         #delete later
 
@@ -79,7 +80,7 @@ class Bot(discord.Client):
                 password="www.freelavalink.ga"
             )
             print("We have logged in as {0.user}".format(self))
-            schedule.every().day.at("21:31").do(check_premium)
+            schedule.every().day.at("00:23").do(check_premium)
             await time_pending()
 
         @self.event
@@ -91,6 +92,14 @@ class Bot(discord.Client):
             if not player.queue.is_empty:
                 next_track = player.queue.get()
                 await player.play(next_track)
+                view = UI_MusicView(player.queue)
+                view = view.create_view()
+
+                await player.src_msg.edit(embed=discord.Embed(
+                    title=player.source.title,
+                    url=player.source.uri,
+                    description=f"Играет {player.source.title} в {player.channel}"
+                ), view=view)
             else:
                 await player.disconnect()
 
@@ -115,7 +124,7 @@ class Bot(discord.Client):
                                                     f"IF NOT EXISTS (" \
                                                         f"SELECT * FROM users " \
                                                         f"WHERE id = {member.id} AND guild = {member.guild.id}) THEN " \
-                                                            f"INSERT INTO users (id, guild) VALUES ({member.id}, {member.guild.id}) " \
+                                                            f"INSERT INTO users (id, guild) VALUES ({member.id}, {member.guild.id});" \
                                                 f"END IF; " \
                                            f"END $$;"
             await conn.fetch(sql_add_new_user_in_db_query)

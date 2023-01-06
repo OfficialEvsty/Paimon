@@ -35,28 +35,32 @@ class Trade_GUI():
 
         (width, height) = im.size
 
-        portret = make_portret(profile_bytes, self.portret_size)
+        """portret = make_portret(profile_bytes, self.portret_size)"""
 
         # Создание кисти
-        im_draw = ImageDraw.Draw(im)
+        """im_draw = ImageDraw.Draw(im)
 
-        im_draw.text((width * self.money_text_paddings_k[0], height * self.money_text_paddings_k[1]), str(money),
-                     fill=(255, 255, 255), font=self.font, align="center", )
+        im_draw.text((width * self.money_text_paddings_k[0], height * self.money_text_paddings_k[1] + 350), f"Стоимость: {money}",
+                     fill=(255, 255, 255), font=self.font, align="right", anchor="mm")
 
-        im_draw.text((width * self.money_text_paddings_k[0] + 100, height * self.money_text_paddings_k[1]), str(user),
-                     fill=(255, 255, 255), font=self.font, align="center", )
+        prim = Image.open("item_system/item_images/Primogem.png")
+        prim = prim.resize((prim.width // 4, prim.height // 4))
+        im.paste(prim, (int(width * self.money_text_paddings_k[0] + 250), int(height * self.money_text_paddings_k[1] + 330)))
+
+        im_draw.text((width * self.money_text_paddings_k[0] - 200, height * self.money_text_paddings_k[1] + 250), str(user),
+                     fill=(255, 255, 255), font=self.font, align="center", )"""
 
         if items is not None:
             n = len(items)
             interval = int(self.panel_interval_btw_holders_k * width)
-            holder_len = int(self.panel_item_holders_size_k * height)
-            indent_w = (width - (n * holder_len + (n - 1) * interval)) // 2
+            holder_len = int(self.panel_item_holders_size_k * width)
+            indent_w = (width - (self.panel_items_size * holder_len + (self.panel_items_size - 1) * interval)) // 2
             for i in range(self.panel_items_size):
                 if i < n:
                     item_holder = Image.open(str(self.dict_rarity[items[i].rarity]))
 
                     item_holder = item_holder.resize(
-                        (int(height * self.panel_item_holders_size_k), int(height * self.panel_item_holders_size_k)))
+                        (int(width * self.panel_item_holders_size_k), int(width * self.panel_item_holders_size_k)))
 
 
                     item_img = Image.open(items[i].img_url)
@@ -70,15 +74,15 @@ class Trade_GUI():
                     item_holder = Image.open(str(self.dict_rarity["default"])).convert(self.mode)
 
                     item_holder = item_holder.resize(
-                        (int(height * self.panel_item_holders_size_k),
-                         int(height * self.panel_item_holders_size_k)))
+                        (int(width * self.panel_item_holders_size_k),
+                         int(width * self.panel_item_holders_size_k)))
 
                 im.paste(item_holder, (int(indent_w), int(height * self.panel_item_holders_paddings_k[1])), item_holder)
                 indent_w += item_holder.width + self.panel_interval_btw_holders_k * width
 
         # Наложение изображения профиля на баннер.
-        im.paste(im=portret, box=(int(self.portret_paddings_k[0] * width), int(self.portret_paddings_k[1] * height)),
-                 mask=portret)
+        """im.paste(im=portret, box=(int(self.portret_paddings_k[0] * width), int(self.portret_paddings_k[1] * height)),
+                 mask=portret)"""
 
         buffer = BytesIO()
         im.save(buffer, 'png')

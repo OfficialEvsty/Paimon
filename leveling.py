@@ -29,7 +29,7 @@ class Leveling:
     users_in_vc = []
     timers_for_users_dict = {}
 
-    async def add_message_xp(self, guild, user: discord.User) -> None:
+    async def add_message_xp(self, guild: discord.Guild, user: discord.User) -> None:
         if guild is None:
             return
         guild_id = guild.id
@@ -46,7 +46,7 @@ class Leveling:
                 if result:
                     current_xp = result[0][0]
                     xp = randint(self.min_xp_message, self.max_xp_message)
-                    exp_modifire = Modifier(user)
+                    exp_modifire = Modifier(user, guild)
                     await exp_modifire.init()
                     current_xp += int(xp * exp_modifire.exp_modifier)
                     current_rank = result[0][1]
@@ -99,7 +99,7 @@ class Leveling:
         xp = random.randrange(self.min_xp_vc, self.max_xp_vc)
         money = random.randrange(self.min_money_vc, self.max_money_vc)
 
-        modifier = Modifier(member)
+        modifier = Modifier(member, member.guild)
         await modifier.init()
         modifiered_xp = int(modifier.exp_modifier * xp)
         modifiered_money = int(modifier.money_modifier * money)

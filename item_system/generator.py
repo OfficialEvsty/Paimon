@@ -21,7 +21,7 @@ class Generator:
         result_dicts_list = []
         max_len = len(dicts_list_by_group_type)
         for i in range(count):
-            result_dicts_list.append(dicts_list_by_group_type[random.randrange(0, max_len-1)])
+            result_dicts_list.append(dicts_list_by_group_type[random.randint(0, max_len-1)])
 
         result_items_list = []
         for i in range(len(result_dicts_list)):

@@ -1,22 +1,42 @@
 import discord
 from discord.ui import Select, View
+from commands.cmd_hoyolab import add_hoyolab, has_hoyolab
+from premium_system.premium import has_premium
 import commands.cmd_inventory
 import commands.cmd_profile
 
+import json
+
 
 class UI_ProfileView:
-    def __init__(self, list_namecards: [] = None, user_id = None):
-        self.owner_id = user_id
+    def __init__(self, list_namecards: [] = None, user: discord.User = None):
+        with open("bot_ui_kit/settings.json") as file:
+            self.cfg = json.loads(file.read())
+
+        self.owner = user
+        self.owner_id = user.id
         self.list_namecards = list_namecards
         self.profile_timeout = None
+        self.donate_ref = self.cfg['donate_ref']
 
 
 
-    def create_view(self) -> discord.ui.View:
+    async def create_view(self) -> discord.ui.View:
         edit_button = discord.ui.Button(
             style=discord.ButtonStyle.gray,
             label="Edit",
             custom_id="Edit"
+        )
+
+        hoyolab_button = discord.ui.Button(
+            style=discord.ButtonStyle.secondary,
+            label="Hoyolab",
+        )
+
+        donate_button = discord.ui.Button(
+            style=discord.ButtonStyle.blurple,
+            url=self.donate_ref,
+            label="Donate"
         )
 
         close_profile_button = discord.ui.Button(
@@ -35,10 +55,48 @@ class UI_ProfileView:
             if self.owner_id == interaction.user.id:
                 view = discord.ui.View()
                 view.add_item(edit_button)
+                view.add_item(hoyolab_button)
                 view.add_item(close_profile_button)
+                if not await has_premium(self.owner):
+                    view.add_item(donate_button)
                 await commands.cmd_profile.cmd_edit_view(interaction, view)
 
         back_button.callback = on_back_button
+
+        async def on_hoyolab_register_button(interaction: discord.Interaction):
+            if self.owner_id == interaction.user.id:
+                modal = discord.ui.Modal(title="Привязать аккаунт Discord к Hoyolab")
+                ltuid_text_box = discord.ui.TextInput(label="Hoyolab UID", style=discord.TextStyle.short, max_length=9, required=True)
+                ltoken_text_box = discord.ui.TextInput(label="Hoyolab Token(Cookies)", style=discord.TextStyle.short,
+                                                       max_length=40, required=True)
+
+                async def on_submit(interaction: discord.Interaction):
+                    await interaction.response.defer(thinking=False)
+                    if ltuid_text_box.value.isdigit():
+                        ltuid = int(ltuid_text_box.value)
+                    else:
+                        await interaction.channel.send(f"Не удалось привязать запись Hoyolab `uid` должен быть численный.", delete_after=5)
+                    ltoken = ltoken_text_box.value
+
+                    if await add_hoyolab(user=interaction.user, ltuid=ltuid, ltoken=ltoken):
+                        await interaction.channel.send(f"Запись Hoyolab {ltuid} привязана.", delete_after=5)
+                    else:
+                        await interaction.channel.send(f"Не удалось привязать запись Hoyolab {ltuid}", delete_after=5)
+
+                modal.on_submit = on_submit
+                modal.add_item(ltuid_text_box)
+                modal.add_item(ltoken_text_box)
+                await interaction.response.send_modal(modal)
+
+        async def on_hoyolab_open_button(interaction: discord.Interaction):
+            await interaction.response.defer()
+            await commands.cmd_hoyolab.profile_hoyolab(interaction, self.owner)
+            pass
+
+        if not await has_hoyolab(self.owner):
+            hoyolab_button.callback = on_hoyolab_register_button
+        else:
+            hoyolab_button.callback = on_hoyolab_open_button
 
 
         async def on_close_callback(interaction: discord.Interaction):
@@ -163,7 +221,10 @@ class UI_ProfileView:
 
         view = discord.ui.View()
         view.add_item(edit_button)
+        view.add_item(hoyolab_button)
         view.add_item(close_profile_button)
+        if not await has_premium(self.owner):
+            view.add_item(donate_button)
         view.timeout = self.profile_timeout
         return view
 

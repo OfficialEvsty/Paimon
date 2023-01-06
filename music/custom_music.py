@@ -6,9 +6,10 @@ from discord.ext import commands
 
 class CustomPlayer(wavelink.Player):
 
-    def __init__(self):
+    def __init__(self, msg: discord.Message = None):
         super().__init__()
         self.queue = wavelink.Queue()
+        self.src_msg: discord.Message = msg
 
 
 
@@ -40,28 +41,22 @@ async def play(interaction: discord.Interaction, search: str):
     if vc:
         vc = interaction.guild.voice_client
     if vc.is_playing():
-
+        await interaction.response.defer(thinking=False)
         vc.queue.put(item=track)
 
-        view = UI_MusicView(vc.queue, interaction.user.id)
-        view = view.create_view()
-
-        await interaction.response.edit_message(embed=discord.Embed(
-            title=track.title,
-            url=track.uri,
-            description=f"Queued {track.title} in {vc.channel}"
-        ))
+        await interaction.followup.send(f"Queued {track.title} in {vc.channel}")
     else:
         await vc.play(track)
 
-        view = UI_MusicView(vc.queue, interaction.user.id)
+        view = UI_MusicView(vc.queue)
         view = view.create_view()
 
-        await interaction.response.send_message(embed=discord.Embed(
+        msg = await interaction.response.send_message(embed=discord.Embed(
             title=vc.source.title,
             url=vc.source.uri,
-            description=f"Playing {vc.source.title} in {vc.channel}"
+            description=f"Играет {vc.source.title} в {vc.channel}"
         ), view=view)
+        vc.src_msg = msg
 
 
 async def skip(interaction: discord.Interaction):
@@ -73,6 +68,12 @@ async def skip(interaction: discord.Interaction):
             return await vc.stop()
 
         await vc.seek(vc.track.length * 1000)
+        embed = discord.Embed(
+            title=vc.source.title,
+            url=vc.source.uri,
+            description=f"Играет {vc.source.title} в {vc.channel}"
+        )
+        await interaction.message.edit()
         if vc.is_paused():
             await vc.resume()
     else:

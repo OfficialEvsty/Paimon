@@ -71,8 +71,15 @@ class Database:
         on_create_table_premium_users_query = 'CREATE TABLE IF NOT EXISTS premium_users (' \
                                               'id SERIAL NOT NULL, ' \
                                               'user_id BIGINT NOT NULL, ' \
-                                              'is_premium BOOLEAN DEFAULT FALSE, ' \
+                                              'until_date DATE NOT NULL, ' \
                                               'PRIMARY KEY(id));' \
+
+        on_create_table_hoyolab_data_query = 'CREATE TABLE IF NOT EXISTS hoyolab_data (' \
+                                             'id SERIAL NOT NULL, ' \
+                                             'user_id BIGINT NOT NULL, ' \
+                                             'ltuid BIGINT NOT NULL, ' \
+                                             'ltoken VARCHAR(40) NOT NULL, ' \
+                                             'PRIMARY KEY(id));'
 
 
         on_create_function_on_update_item_owner = 'CREATE OR REPLACE FUNCTION on_switch_vision_owner() ' \
@@ -90,14 +97,13 @@ class Database:
                                                     'AFTER UPDATE OF user_id ON items ' \
                                                     'FOR EACH ROW EXECUTE PROCEDURE on_switch_vision_owner();'
 
-
         await self.conn.fetch(on_create_table_namecards_query)
         await self.conn.fetch(on_create_table_users_query)
         await self.conn.fetch(on_create_table_items_query)
         await self.conn.fetch(on_create_table_guilds_guery)
         await self.conn.fetch(on_create_table_premium_users_query)
+        await self.conn.fetch(on_create_table_hoyolab_data_query)
         await self.conn.fetch(on_create_table_visions_query)
-
 
         await self.conn.fetch(on_create_function_on_update_item_owner)
 

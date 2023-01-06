@@ -1,8 +1,13 @@
 import discord
 import asyncpg
+import json
+import random
 from item_system.item_use import usage
 from item_system.item import Item
 from bot import Bot
+from item_system.generator import Generator
+from rewarding.reward import Reward
+from transaction_system.transaction import Transaction
 
 
 @usage.add_item_use
@@ -48,3 +53,34 @@ async def vision(interaction: discord.Interaction, item: Item):
                                 f"END $$;"
     await Bot.db.conn.fetch(on_insert_vision_query)
     await Bot.db.conn.close()
+
+
+@usage.add_item_use
+async def wishing(interaction: discord.Interaction, item: Item):
+    user = interaction.user
+    guild = interaction.guild
+    min_money = 50
+    max_money = 500
+
+    money = random.randint(min_money, max_money)
+    list_items = []
+    with open("item_system/item_use/wishing.json", "r") as file:
+        group_type_chance_drop_dict = json.loads(file.read())
+    for (type, chance) in group_type_chance_drop_dict.items():
+        result = random.random()
+        print(result, chance)
+        if result <= chance:
+            items = Generator.generate_random_items_by_group_type(type, 1)
+            list_items.extend(items)
+
+    reward = Reward(guild, user, money, items=list_items)
+    await reward.apply()
+
+    reason = f"{user} помолился, использовав {item.name}"
+    transaction = Transaction(user, reason, money, received_items=list_items)
+    await transaction.send()
+
+
+
+
+

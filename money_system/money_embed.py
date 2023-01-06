@@ -2,6 +2,7 @@ import discord
 from io import BytesIO
 from PIL import Image
 from utilities.emojis import Emoji
+from global_modifiers.modifier import Modifier
 
 
 class Money_Embed(discord.Embed):

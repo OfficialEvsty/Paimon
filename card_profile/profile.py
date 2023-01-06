@@ -24,15 +24,19 @@ class Profile:
         self.format_file = cfg['format_file_bg']
         self.text_fill = cfg['text_fill']
         self.visions_source_path = cfg['visions_source_path']
+        self.premium_paddings_k = cfg['premium_paddings_k']
+        self.premium_size_k = cfg['premium_size_k']
+        self.premium_img_path = cfg['premium_img_path']
 
 
-    def draw(self, user: str, uid: str, bio: str, rank: int, xp: int, profile_bytes: BytesIO, card: str, vision: str = None) -> BytesIO:
+    def draw(self, user: str, uid: str, bio: str, rank: int, xp: int, profile_bytes: BytesIO, card: str, vision: str = None, premium: int = None) -> BytesIO:
         text_filling = (self.text_fill[0], self.text_fill[1], self.text_fill[2], self.text_fill[3])
         # Загрузка шаблонных изображений.
 
         bg_path = self.backgrounds_path + card
         profile_bytes = Image.open(profile_bytes).convert(self.mode)
         im = Image.open(bg_path + "_Card.png").convert(self.mode)
+        premium_img = Image.open(self.premium_img_path).convert(self.mode)
         im = im.resize((int(self.background_size[0]), int(self.background_size[1])))
 
         mask = Image.open(self.mask_path).convert(self.mode)
@@ -42,6 +46,8 @@ class Profile:
         # Размерим
         (width, height) = im.size
         resized_mask = mask.resize((width, height))
+        resized_premium_img = premium_img.resize((int(premium_img.width * self.premium_size_k[0]), int(premium_img.height * self.premium_size_k[1])))
+        premium_mask = resized_premium_img.copy()
 
         # Блюрим баннер
         #im = im.filter(ImageFilter.BLUR)
@@ -54,6 +60,9 @@ class Profile:
 
         # Создание портрета из изображения профиля.
         portret = make_portret(profile_bytes, self.portret_size)
+
+        if premium:
+            im.paste(resized_premium_img, (int(width * self.premium_paddings_k[0]), int(height * self.premium_paddings_k[1])), premium_mask)
 
         # Создание кисти
         im_draw = ImageDraw.Draw(im)
@@ -113,6 +122,8 @@ class Profile:
         bio = string_cuts_on_rows(bio, count_chars_on_row)
         bio_text_position = (int(60 / 108 * width), int(22 / 60 * height))
         im_draw.text(bio_text_position, bio, font=self.small_font, fill=text_filling, anchor="ms")
+
+
 
         buffer = BytesIO()
         im.save(buffer, 'png')

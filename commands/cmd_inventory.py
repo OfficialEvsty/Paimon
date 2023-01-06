@@ -19,7 +19,7 @@ async def switch_page(inventory: Inventory, is_going_to_right_page: bool) -> boo
 async def show_inventory(interaction: discord.Interaction, is_private: bool):
 
     owner_id = interaction.user.id
-    if interaction.response:
+    if interaction.response and interaction.message is None:
         await interaction.response.defer(ephemeral=is_private)
     records_item = await Inventory.get_inventory(interaction)
 
@@ -41,19 +41,24 @@ async def show_inventory(interaction: discord.Interaction, is_private: bool):
             image_url=f"attachment://inventory.png"
         )
 
-
-        if interaction.message:
-            message_id = interaction.message.id
-            return await interaction.followup.edit_message(message_id=message_id, attachments=[file], embed=embed, view=view)
+        if interaction.message is not None:
+            webhook_id = interaction.message.id
+            return await interaction.followup.edit_message(message_id=webhook_id, attachments=[file], embed=embed, view=view)
 
         await interaction.followup.send(file=file, embed=embed, view=view)
     else:
-        await interaction.response.send_message("Ваш инвентарь пуст.")
+        if interaction.message:
+            webhook_id = interaction.message.id
+            await interaction.followup.delete_message(webhook_id)
+            await interaction.followup.send("Ваш инвентарь пуст.")
+        else:
+            await interaction.followup.send("Ваш инвентарь пуст.")
 
 
 async def show_trade_inventory(interaction: discord.Interaction, view: discord.ui.View, items: [] = None, items_to_trade: [] = None,
                                inventory: Inventory = None):
-    await interaction.response.defer()
+    if interaction.response and interaction.message is None:
+        await interaction.response.defer()
     if items is None and items_to_trade is None:
         records_item = await Inventory.get_inventory(interaction)
         inventory = Inventory(Generator.create_items(Generator.to_list(records_item)))
@@ -126,6 +131,7 @@ async def on_switch_page_select(interaction: discord.Interaction, view: discord.
 
 async def draw_inventory_edit(interaction: discord.Interaction, list_items: [], chosen_item: int, view: discord.ui.View):
     user_called_id = interaction.user.id
+    await interaction.response.defer()
     if len(list_items) > 0:
         gui = GUI(list_items)
         buffer = gui.draw(chosen_item=chosen_item)
@@ -135,8 +141,9 @@ async def draw_inventory_edit(interaction: discord.Interaction, list_items: [], 
             description=list_items[chosen_item].description,
             image_url=f"attachment://inventory.png"
         )
-
-        inventory_msg = await interaction.response.edit_message(embed=embed, attachments=[discord.File(fp=buffer, filename="inventory.png")], view=view)
+    if interaction.message:
+        message_id = interaction.message.id
+        inventory_msg = await interaction.followup.edit_message(message_id=message_id, embed=embed, attachments=[discord.File(fp=buffer, filename="inventory.png")], view=view)
     else:
         await interaction.response.send_message("Ваш инвентарь пуст.")
     #return inventory_msg

@@ -2,6 +2,7 @@ import discord
 from money_system.money_embed import Money_Embed
 from money_system.money import update_money_db, get_money_db
 from transaction_system.transaction import Transaction
+from global_modifiers.modifier import Modifier
 
 
 async def give_money(interaction: discord.Interaction, user: discord.User, amount: int):
@@ -31,5 +32,15 @@ async def balance(interaction: discord.Interaction, user: discord.User = None) -
         user = interaction.user
     guild = interaction.guild
     current_money = await get_money_db(user, guild)
+    money_modifier = Modifier(user, guild)
+    await money_modifier.init()
+    money_modifiers_str = ""
+    for (key, value) in money_modifier.money_modifiers_dict.items():
+        money_modifiers_str += f"⎢ `{key}`: `+` `x{round(value, 1)}`\n"
     embed = Money_Embed(user, current_money)
+    if money_modifiers_str == "":
+        money_modifiers_str = "У вас пока что нету усилителей."
+    embed.add_field(name=f"⎢ Общий бонус от усилителей: "
+                         f"`x{round(money_modifier.money_modifier - money_modifier.default_money_earn, 1)}`",
+                    value=money_modifiers_str)
     return await interaction.response.send_message(embed=embed)

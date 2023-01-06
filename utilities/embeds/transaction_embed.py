@@ -18,12 +18,12 @@ class Transaction_Embed(discord.Embed):
             self.add_field(name="Баланс", value=f"Заработал `{money}` {Emoji.Primogem}")
         if received_items:
             for item in received_items:
-                output_received_items += f"`+` `{item.name}`"
+                output_received_items += f"`+` `{item.name}`\n"
             self.add_field(name=title, value=output_received_items)
 
         if given_items:
             for item in given_items:
-                output_given_items += f"`-` `{item.name}`"
+                output_given_items += f"`-` `{item.name}`\n"
             self.add_field(name=title, value=output_given_items)
 
 

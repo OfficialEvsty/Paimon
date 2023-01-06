@@ -4,8 +4,7 @@ from discord.ui import Select, View
 
 
 class UI_MusicView:
-    def __init__(self, list_tracks: [], user_id):
-        self.owner_id = user_id
+    def __init__(self, list_tracks: []):
         self.list_tracks = list_tracks
 
 
@@ -30,19 +29,19 @@ class UI_MusicView:
         )
 
         async def on_skip_callback(interaction: discord.Interaction):
-            if self.owner_id == interaction.user.id:
-                await music.custom_music.skip(interaction)
-                return await interaction.response.send_message(f"Трек пропущен", delete_after=10)
+            await music.custom_music.skip(interaction)
+
+
+
+            return await interaction.response.send_message(f"Трек пропущен", delete_after=10)
 
         async def on_pause_callback(interaction: discord.Interaction):
-            if self.owner_id == interaction.user.id:
-                await music.custom_music.pause(interaction)
-                return await interaction.response.send_message(f"Трек поставлен на паузу", delete_after=10)
+            await music.custom_music.pause(interaction)
+            return await interaction.response.send_message(f"Трек поставлен на паузу", delete_after=10)
 
         async def on_resume_callback(interaction: discord.Interaction):
-            if self.owner_id == interaction.user.id:
-                await music.custom_music.resume(interaction)
-                return await interaction.response.send_message(f"Трек снят с паузы", delete_after=10)
+            await music.custom_music.resume(interaction)
+            return await interaction.response.send_message(f"Трек снят с паузы", delete_after=10)
 
         skip_track_button.callback = on_skip_callback
         pause_track_button.callback = on_pause_callback
