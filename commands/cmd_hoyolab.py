@@ -56,7 +56,9 @@ async def get_hoyolab_stats(interaction: discord.Interaction):
     if result:
         ltuid = result[0][0]
         ltoken = result[0][1]
-        hoyolab = Hoyolab(ltuid, ltoken)
+        cookies = {"ltuid": ltuid, "ltoken": ltoken}
+
+        hoyolab = Hoyolab(cookies)
         await hoyolab.init()
         g_user = G_user(hoyolab)
         await g_user.init()
@@ -80,6 +82,8 @@ async def add_hoyolab(user: discord.User, ltuid: int, ltoken: str) -> bool:
     if not await valide_hoyolab(ltuid, ltoken):
         print("Hoyolab ID's not valid.")
         return False
+    cookies = {"ltuid": ltuid, "ltoken": ltoken}
+
     conn = await asyncpg.connect(Database.str_connection)
     add_if_not_exist_if_exist_update = "DO $$ " \
                                        "BEGIN " \
@@ -94,6 +98,8 @@ async def add_hoyolab(user: discord.User, ltuid: int, ltoken: str) -> bool:
                                             f"END IF;" \
                                        f"END $$;"
     await conn.fetch(add_if_not_exist_if_exist_update)
+
+    #await conn.fetch(sql_insert_or_update_query)
     await conn.close()
     return True
 

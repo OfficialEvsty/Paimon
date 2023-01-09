@@ -89,9 +89,10 @@ class UI_ProfileView:
                 await interaction.response.send_modal(modal)
 
         async def on_hoyolab_open_button(interaction: discord.Interaction):
-            await interaction.response.defer()
-            await commands.cmd_hoyolab.profile_hoyolab(interaction, self.owner)
-            pass
+            if self.owner_id == interaction.user.id or interaction.message.author.id == interaction.user.id:
+                await interaction.response.defer()
+                await commands.cmd_hoyolab.profile_hoyolab(interaction, self.owner)
+                pass
 
         if not await has_hoyolab(self.owner):
             hoyolab_button.callback = on_hoyolab_register_button

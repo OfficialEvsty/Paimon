@@ -63,16 +63,16 @@ class Hoyolab_GUI:
         im_draw.text(self.nickname_paddings, text=name, fill=self.fill, font=self.font)
 
         num_characters_in_name = len(name)
-        pixel_on_character = 30
+        pixel_on_character = 28
         deviation = int(num_characters_in_name * pixel_on_character)
         box_draw = ImageDraw.Draw(rounded_level_box)
 
         box_draw.text((int(self.level_box_size[0] * 0.15), int(self.level_box_size[1] * 0.3)), text=f"lvl.{lvl}", font=self.small_font,
                       align="center")
 
-        right_padding = 50
+        right_padding = 25
         im_draw.text(xy=(self.panel_size[0] - right_padding, self.nickname_paddings[1]), text=f"ID: {uid}", fill=self.fill,
-                      font=self.font, anchor="rs")
+                      font=self.font, anchor="ra")
 
         panel_bottom.paste(rounded_level_box, (int(self.nickname_paddings[0] + deviation), int(self.nickname_paddings[1])), rounded_level_box)
         croped_bg_img.paste(panel_bottom, (0, croped_bg_img.height - panel_bottom.height))

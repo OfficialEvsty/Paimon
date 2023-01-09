@@ -81,6 +81,13 @@ class Database:
                                              'ltoken VARCHAR(40) NOT NULL, ' \
                                              'PRIMARY KEY(id));'
 
+        on_create_table_files_query = 'CREATE TABLE IF NOT EXISTS files (' \
+                                      'id SERIAL NOT NULL, ' \
+                                      'user_id BIGINT NOT NULL,' \
+                                      'guild BIGINT NOT NULL, ' \
+                                      'gif BYTEA NOT NULL, ' \
+                                      'PRIMARY KEY(id));'
+
 
         on_create_function_on_update_item_owner = 'CREATE OR REPLACE FUNCTION on_switch_vision_owner() ' \
                                                   'RETURNS trigger AS $tab$ ' \
@@ -104,6 +111,7 @@ class Database:
         await self.conn.fetch(on_create_table_premium_users_query)
         await self.conn.fetch(on_create_table_hoyolab_data_query)
         await self.conn.fetch(on_create_table_visions_query)
+        await self.conn.fetch(on_create_table_files_query)
 
         await self.conn.fetch(on_create_function_on_update_item_owner)
 

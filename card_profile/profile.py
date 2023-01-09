@@ -28,47 +28,43 @@ class Profile:
         self.premium_size_k = cfg['premium_size_k']
         self.premium_img_path = cfg['premium_img_path']
 
-
-    def draw(self, user: str, uid: str, bio: str, rank: int, xp: int, profile_bytes: BytesIO, card: str, vision: str = None, premium: int = None) -> BytesIO:
+    def draw_content(self, im: Image, user: str, uid: str, bio: str, rank: int, xp: int, profile_bytes: BytesIO, vision: str = None, premium: int = None) -> Image:
         text_filling = (self.text_fill[0], self.text_fill[1], self.text_fill[2], self.text_fill[3])
-        # Загрузка шаблонных изображений.
-
-        bg_path = self.backgrounds_path + card
         profile_bytes = Image.open(profile_bytes).convert(self.mode)
-        im = Image.open(bg_path + "_Card.png").convert(self.mode)
         premium_img = Image.open(self.premium_img_path).convert(self.mode)
         im = im.resize((int(self.background_size[0]), int(self.background_size[1])))
 
         mask = Image.open(self.mask_path).convert(self.mode)
         exp_sign = Image.open(self.exp_img_path).convert(self.mode)
 
-
         # Размерим
         (width, height) = im.size
         resized_mask = mask.resize((width, height))
-        resized_premium_img = premium_img.resize((int(premium_img.width * self.premium_size_k[0]), int(premium_img.height * self.premium_size_k[1])))
+        resized_premium_img = premium_img.resize(
+            (int(premium_img.width * self.premium_size_k[0]), int(premium_img.height * self.premium_size_k[1])))
         premium_mask = resized_premium_img.copy()
 
         # Блюрим баннер
-        #im = im.filter(ImageFilter.BLUR)
+        # im = im.filter(ImageFilter.BLUR)
 
         # Сопоставление размера маски с размером баннера.
-        #mask.resize(im.size)
+        # mask.resize(im.size)
 
         # Получаем размеры основного баннера
-
 
         # Создание портрета из изображения профиля.
         portret = make_portret(profile_bytes, self.portret_size)
 
         if premium:
-            im.paste(resized_premium_img, (int(width * self.premium_paddings_k[0]), int(height * self.premium_paddings_k[1])), premium_mask)
+            im.paste(resized_premium_img,
+                     (int(width * self.premium_paddings_k[0]), int(height * self.premium_paddings_k[1])), premium_mask)
 
         # Создание кисти
         im_draw = ImageDraw.Draw(im)
 
         # Наложение изображения профиля на баннер.
-        im.paste(im=portret, box=(int(self.portret_paddings_k[0] * width), int(self.portret_paddings_k[1] * height)), mask=portret)
+        im.paste(im=portret, box=(int(self.portret_paddings_k[0] * width), int(self.portret_paddings_k[1] * height)),
+                 mask=portret)
 
         # Наложение маски на баннер
         im.paste(resized_mask, resized_mask)
@@ -83,19 +79,17 @@ class Profile:
                      (int(self.vision_padding_k[0] * width), int(self.vision_padding_k[1] * height)),
                      resized_vision_img)
 
+        im.paste(exp_sign, (int(13 / 36 * width), int(38 / 60 * height)), exp_sign)
 
-
-        im.paste(exp_sign, (int(13/36 * width), int(38/60 * height)), exp_sign)
-
-        xp_bar_rect = 10/24 * width, 170/240 * height,  17/18 * width, 174/240 * height
-        xp_filled_bar_rect = 10/24 * width, 170/240 * height,  10/24 * width * (1 - xp / Profile.neededxp(rank)) + (xp / Profile.neededxp(rank) * 17/18 * width), 174/240 * height
-
+        xp_bar_rect = 10 / 24 * width, 170 / 240 * height, 17 / 18 * width, 174 / 240 * height
+        xp_filled_bar_rect = 10 / 24 * width, 170 / 240 * height, 10 / 24 * width * (
+                    1 - xp / Profile.neededxp(rank)) + (
+                                         xp / Profile.neededxp(rank) * 17 / 18 * width), 174 / 240 * height
 
         im_draw.text((int(41 / 108 * width), int(11 / 60 * height)), user, font=self.font, fill=text_filling)
 
-
         uid_text = f'UID {uid}'
-        uid_pos = (int(18/288 * width), int(345/480 * height))
+        uid_pos = (int(18 / 288 * width), int(345 / 480 * height))
         im_draw.text(uid_pos, uid_text, font=self.medium_font, fill=text_filling)
 
         rank_text = f'{rank}'
@@ -106,30 +100,37 @@ class Profile:
                      fill=text_filling)
 
         xp_text_label = "Adventure EXP"
-        im_draw.text((int(15/36 * width), int(79/120 * height)), xp_text_label, font=self.small_font, fill=text_filling)
+        im_draw.text((int(15 / 36 * width), int(79 / 120 * height)), xp_text_label, font=self.small_font,
+                     fill=text_filling)
 
         needed_xp = self.neededxp(rank)
         xp_text = f'{xp}/{needed_xp}'
-        xp_text_pos = (int(30/36 * width), int(79/120 * height))
-        im_draw.text(xp_text_pos, xp_text, font=self.small_font, fill=text_filling)
-
+        xp_text_pos = (xp_bar_rect[2], xp_bar_rect[3] - 5)
+        im_draw.text(xp_text_pos, xp_text, font=self.small_font, fill=text_filling, anchor="rd")
 
         im_draw.rounded_rectangle(xy=xp_bar_rect, radius=100, fill=(0, 0, 0, 100))
         im_draw.rounded_rectangle(xy=xp_filled_bar_rect, radius=10, fill=(32, 223, 32, 220))
 
-
         count_chars_on_row = 25
         bio = string_cuts_on_rows(bio, count_chars_on_row)
-        bio_text_position = (int(60 / 108 * width), int(22 / 60 * height))
-        im_draw.text(bio_text_position, bio, font=self.small_font, fill=text_filling, anchor="ms")
+        bio_text_position = (int(64 / 108 * width), int(20 / 60 * height))
+        im_draw.text(bio_text_position, bio, font=self.small_font, fill=text_filling, anchor="ma", align="center")
 
+        return im
 
+    def draw(self, user: str, uid: str, bio: str, rank: int, xp: int, profile_bytes: BytesIO, card: str,
+             vision: str = None, premium: int = None) -> BytesIO:
+        # Загрузка шаблонных изображений.
 
+        bg_path = self.backgrounds_path + card
+        im = Image.open(bg_path + "_Card.png").convert(self.mode)
+
+        image = self.draw_content(im=im, user=user, uid=uid, bio=bio, rank=rank, xp=xp, profile_bytes=profile_bytes,
+                                 vision=vision, premium=premium)
         buffer = BytesIO()
-        im.save(buffer, 'png')
+        image.save(buffer, 'png')
         buffer.seek(0)
         return buffer
-
 
 
 

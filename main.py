@@ -112,14 +112,28 @@ async def app_give_premium(interaction: discord.Interaction, user: discord.User,
         if months <= 12 and months > 0:
             await give_premium(user=user, months=months)
 
+
 @bot.tree.command(name="hoyolab", description="Привязать свой аккаунт Discord к аккаунту Hoyolab.")
 async def app_add_hoyolab(interaction: discord.Interaction, hoyolab_uid: int, hoyolab_token: str):
     await commands.cmd_hoyolab.add_hoyolab(interaction.user, hoyolab_uid, hoyolab_token)
+
 
 @bot.tree.command(name="hoyo_stats", description="Показать статистику в Genshin Impact")
 async def app_show_genshin_stats(interaction: discord.Interaction):
     await interaction.response.defer()
     await commands.cmd_hoyolab.get_hoyolab_stats(interaction)
+
+
+@bot.tree.command(name="set_animated_profile", description="Установить анимированный профиль.")
+async def app_set_animated_profile(interaction: discord.Interaction, url: str):
+    await interaction.response.defer()
+    await commands.cmd_profile.cmd_set_animated_profile(interaction, url)
+
+
+@bot.tree.command(name="get_anim", description="Получить gif дату.")
+async def app_get_animated_profile(interaction: discord.Interaction):
+    await interaction.response.defer()
+    await commands.cmd_profile.cmd_get_animated_profile(interaction)
 
 bot.startup()
 os.environ['TOKEN'] = 'ODYwODA3ODc5NDE3NTI4MzIx.G8IL1T.IoPoLzzGIPpQr4UZNypmh8vR1JpEkcYe_-9CEk'
