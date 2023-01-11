@@ -3,11 +3,11 @@ import os
 import schedule
 import shop_system.market
 from bot import Bot
-from commands.user_info import *
+from commands.user_settings import *
 import discord
 import wavelink
 import asyncio
-import commands.user_info
+import commands.user_settings
 import commands.cmd_profile
 import commands.cmd_main
 import commands.cmd_inventory
@@ -42,18 +42,15 @@ async def app_show_card(interaction: discord.Interaction, user: discord.Member =
     await commands.cmd_profile.cmd_card(interaction, user)
 
 
-@bot.tree.command(name="get_uid", description="Увидеть свой UID на сервере.")
-async def app_get_uid(interaction: discord.Interaction):
-    await commands.user_info.cmd_get_uid(interaction)
-
-
 @bot.tree.command(name="custom_embed", description="Создать сообщение вставку.")
 async def app_custom_embed(interaction: discord.Interaction):
     await commands.cmd_main.create_custom_embed(interaction)
 
+
 @bot.tree.command(name="inventory", description="Открыть инвентарь.")
 async def inventory(interaction: discord.Interaction, is_private: bool = True):
     await commands.cmd_inventory.show_inventory(interaction, is_private)
+
 
 @bot.tree.command(name="give_item", description="Добавить предмет в свой инвентарь.")
 async def app_add_item(interaction: discord.Interaction, item_type: int, user: discord.User = None):
@@ -74,6 +71,7 @@ async def app_context_command(interaction: discord.Interaction, user: discord.Us
 async def app_context_balance(interaction: discord.Interaction, user: discord.User):
     return await commands.cmd_money.balance(interaction, user)
 
+
 @bot.tree.command(name="reward")
 async def app_reward(interaction: discord.Interaction, money: int = None, exp: int = None):
     reward = Reward(guild=interaction.guild, user=interaction.user, money=money, exp=exp)
@@ -85,9 +83,11 @@ async def app_reward(interaction: discord.Interaction, money: int = None, exp: i
 async def app_balance(interaction: discord.Interaction):
     return await commands.cmd_money.balance(interaction)
 
+
 @bot.tree.command(name="give", description="Передать игроку деньги")
 async def app_give_money(interaction: discord.Interaction, user: discord.User, amount: int):
     await commands.cmd_money.give_money(interaction, user, amount)
+
 
 @bot.tree.command(name="setup_bot_notifications", description="Эта команда устанавливает канал, в который бот будет присылать уведомления о прогрессе игроков.")
 async def app_setup_notifications(interaction: discord.Interaction, is_disabled: bool = False):
@@ -103,6 +103,7 @@ async def app_setup_transactions(interaction: discord.Interaction, is_disabled: 
     status = not is_disabled
     await interaction.response.send_message(f"Уведомления о транзакциях в канале `{interaction.channel}`: `{status}`",
                                             delete_after=10)
+
 
 @bot.tree.command(name="premium", description="Выдать пользователю Premium статус. Разрешение:(Только разработчик)")
 async def app_give_premium(interaction: discord.Interaction, user: discord.User, months: int = -1):
@@ -130,10 +131,15 @@ async def app_set_animated_profile(interaction: discord.Interaction, url: str):
     await commands.cmd_profile.cmd_set_animated_profile(interaction, url)
 
 
-@bot.tree.command(name="get_anim", description="Получить gif дату.")
-async def app_get_animated_profile(interaction: discord.Interaction):
+@bot.tree.command(name="switch_premium_backgroung_mode", description="Поменять бэкграунд на премиум.")
+async def turn_on_or_off_animated_background(interaction: discord.Interaction):
     await interaction.response.defer()
-    await commands.cmd_profile.cmd_get_animated_profile(interaction)
+    is_enable = await commands.user_settings.turn_of_or_on_animated_background(interaction.user, interaction.guild)
+    if is_enable:
+        response = "включён"
+    else:
+        response = "отключён"
+    await interaction.followup.send(f"Premium фон `{response}`")
 
 bot.startup()
 os.environ['TOKEN'] = 'ODYwODA3ODc5NDE3NTI4MzIx.G8IL1T.IoPoLzzGIPpQr4UZNypmh8vR1JpEkcYe_-9CEk'

@@ -1,4 +1,6 @@
-from urllib.request import urlopen
+import time
+from urllib.request import urlopen, Request
+from http.client import HTTPResponse
 from PIL import Image, ImageDraw, ImageFont, ImageSequence
 from io import BytesIO, StringIO
 
@@ -9,10 +11,18 @@ class Gif:
         self.duration: int = duration
         self.frames: [] = None
 
+    def __await__(self):
+        async def closure():
+            # We can await in here
+            return self
+
+        return closure().__await__()
+
     def construct(self) -> BytesIO:
         if self.frames is None:
             raise FramesNotFound(self)
-
+        print(self.frames)
+        start = time.monotonic()
         buffer = BytesIO()
         self.frames[0].save(
             buffer,
@@ -24,51 +34,69 @@ class Gif:
             disposal=2,
             loop=0
         )
+        end = time.monotonic()
+        print(f"Время сбора гифки: {end - start}")
         return buffer
 
 
 def get_img_file(gif_url: str):
     if gif_url[-4:] == ".gif":
-        gif = urlopen(gif_url)
+        req = Request(
+            url=gif_url,
+            headers={'User-Agent': 'Mozilla/5.0'}
+        )
+        gif = urlopen(req)
         return gif
     else:
         raise IncorrectGifURL(gif_url)
 
 
-
-def convert_to_bytea(opened_gif_url) -> BytesIO:
-    """with Image.open(opened_gif_url) as img:
-        if not is_gif_size_valid(img.size):
-            raise IncorrectGifSize(img.size)"""
+def convert_to_bytea(opened_gif_url: HTTPResponse) -> BytesIO:
     buffer = BytesIO(opened_gif_url.read())
+    with Image.open(buffer) as gif:
+        if not is_gif_size_valid(gif.size):
+            raise IncorrectGifSize(gif.size)
+        if gif.n_frames > 75:
+            raise MuchFramesInGif(gif.n_frames)
+
+    #print(buffer.getvalue())
     return buffer
 
 
-def get_gif_frames(gif_bytes_io: BytesIO) -> Gif:
+async def get_gif_frames(gif_bytes_io: BytesIO) -> Gif:
     frames = []
     with Image.open(gif_bytes_io) as gif:
-        if not is_gif_size_valid(gif.size):
-            raise IncorrectGifSize(gif.size)
         duration = gif.info['duration']
+        start_ = time.monotonic()
         for frame in ImageSequence.Iterator(gif):
+            start = time.monotonic()
             buffer = BytesIO()
-
             frame.save(buffer, 'png')
+            end = time.monotonic()
+            print(end - start)
             frames.append(buffer)
-    worked_gif = Gif(frames, duration, )
+    worked_gif = Gif(frames, duration)
+    end_ = time.monotonic()
+    print(end_ - start_)
     return worked_gif
 
 
 def is_gif_size_valid(size: ()) -> bool:
     template_size = (1092, 520)
-    ratio_weight_to_height = template_size[0] // template_size[1]
-    delta = 0.25
-    current_ratio_weight_to_height = size[0] // size[1]
+    ratio_weight_to_height = template_size[0] / template_size[1]
+    delta = 0.4
+    current_ratio_weight_to_height = size[0] / size[1]
+    print(current_ratio_weight_to_height, ratio_weight_to_height, delta)
 
     if ratio_weight_to_height - delta <= current_ratio_weight_to_height <= ratio_weight_to_height + delta:
         return True
     else:
         return False
+
+
+class MuchFramesInGif(Exception):
+    def __init__(self, count_frames):
+        self.text = f"Gif has too much frames {count_frames}."
 
 
 class IncorrectGifSize(Exception):

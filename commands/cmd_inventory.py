@@ -8,6 +8,8 @@ from item_system.generator import Generator
 from item_system.inventory import Inventory
 from item_system.item import Item
 from item_system.inventory_gui import Inventory_GUI as GUI
+from bot_ui_kit.ui_interventory import UI_InterventoryView
+from item_system.inventory_interaction import Interventory
 from bot_ui_kit.ui_inventory_interaction import UI_InventoryView
 from bot import Bot
 
@@ -17,19 +19,18 @@ async def switch_page(inventory: Inventory, is_going_to_right_page: bool) -> boo
 
 
 async def show_inventory(interaction: discord.Interaction, is_private: bool):
-
-    owner_id = interaction.user.id
+    owner = interaction.user
     if interaction.response and interaction.message is None:
         await interaction.response.defer(ephemeral=is_private)
     records_item = await Inventory.get_inventory(interaction)
 
     if records_item:
-        inventory = Inventory(Generator.create_items(Generator.to_list(records_item)))
-        gui = GUI(inventory.list_items_on_page)
+        interventory = Interventory(Generator.create_items(Generator.to_list(records_item)))
+        # inventory = Inventory(Generator.create_items(Generator.to_list(records_item)))
+        gui = GUI(interventory.stack_store)
         buffer = gui.draw()
 
-        ui = UI_InventoryView(inventory, owner_id)
-        view = ui.create_select()
+        ui = UI_InterventoryView(user=owner, interventory=interventory)
 
         file = discord.File(fp=buffer, filename="inventory.png")
 
@@ -43,9 +44,9 @@ async def show_inventory(interaction: discord.Interaction, is_private: bool):
 
         if interaction.message is not None:
             webhook_id = interaction.message.id
-            return await interaction.followup.edit_message(message_id=webhook_id, attachments=[file], embed=embed, view=view)
+            return await interaction.followup.edit_message(message_id=webhook_id, attachments=[file], embed=embed, view=ui)
 
-        await interaction.followup.send(file=file, embed=embed, view=view)
+        await interaction.followup.send(file=file, embed=embed, view=ui)
     else:
         if interaction.message:
             webhook_id = interaction.message.id
@@ -111,8 +112,9 @@ async def on_switch_page(interaction: discord.Interaction, items_page: [], view:
         return await interaction.followup.edit_message(message_id=message_id, attachments=[file], embed=embed, view=view)
 
 
-async def on_switch_page_select(interaction: discord.Interaction, view: discord.ui.View, inventory: Inventory):
-    gui = GUI(list_items=inventory.list_items_on_page)
+async def on_switch_page_select(interaction: discord.Interaction, view: discord.ui.View, interventory: Interventory):
+    items = interventory.stack_store
+    gui = GUI(dict_items=items)
     buffer = gui.draw()
     file = discord.File(fp=buffer, filename="inventory.png")
     description = "Выберите предмет, чтобы увидеть его описание."
@@ -127,26 +129,29 @@ async def on_switch_page_select(interaction: discord.Interaction, view: discord.
         return await interaction.followup.edit_message(message_id=message_id, attachments=[file], embed=embed, view=view)
 
 
+async def switch_view(interaction: discord.Interaction, view: discord.ui.View):
+    if interaction.message:
+        await interaction.response.edit_message(view=view)
 
 
-async def draw_inventory_edit(interaction: discord.Interaction, list_items: [], chosen_item: int, view: discord.ui.View):
-    user_called_id = interaction.user.id
+async def draw_inventory_edit(interaction: discord.Interaction, dict_items: {}, chosen_item: int, view: discord.ui.View):
     await interaction.response.defer()
-    if len(list_items) > 0:
-        gui = GUI(list_items)
+    if len(dict_items) > 0:
+        gui = GUI(dict_items)
         buffer = gui.draw(chosen_item=chosen_item)
 
         embed = Inventory_Embed(
             interaction=interaction,
-            description=list_items[chosen_item].description,
+            description=dict_items[chosen_item][0].description,
             image_url=f"attachment://inventory.png"
         )
     if interaction.message:
         message_id = interaction.message.id
-        inventory_msg = await interaction.followup.edit_message(message_id=message_id, embed=embed, attachments=[discord.File(fp=buffer, filename="inventory.png")], view=view)
+        await interaction.followup.edit_message(message_id=message_id, embed=embed,
+                                                attachments=[discord.File(fp=buffer, filename="inventory.png")],
+                                                view=view)
     else:
         await interaction.response.send_message("Ваш инвентарь пуст.")
-    #return inventory_msg
 
 
 async def drop(interaction: discord.Interaction, item: item_system.item.Item):

@@ -28,7 +28,7 @@ class Profile:
         self.premium_size_k = cfg['premium_size_k']
         self.premium_img_path = cfg['premium_img_path']
 
-    def draw_content(self, im: Image, user: str, uid: str, bio: str, rank: int, xp: int, profile_bytes: BytesIO, vision: str = None, premium: int = None) -> Image:
+    async def draw_content(self, im: Image, user: str, uid: str, bio: str, rank: int, xp: int, profile_bytes: BytesIO, vision: str = None, premium: int = None) -> Image:
         text_filling = (self.text_fill[0], self.text_fill[1], self.text_fill[2], self.text_fill[3])
         profile_bytes = Image.open(profile_bytes).convert(self.mode)
         premium_img = Image.open(self.premium_img_path).convert(self.mode)
@@ -118,19 +118,17 @@ class Profile:
 
         return im
 
-    def draw(self, user: str, uid: str, bio: str, rank: int, xp: int, profile_bytes: BytesIO, card: str,
-             vision: str = None, premium: int = None) -> BytesIO:
+    async def draw(self, user: str, uid: str, bio: str, rank: int, xp: int, profile_bytes: BytesIO, card: str,
+             vision: str = None, premium: int = None) -> Image:
         # Загрузка шаблонных изображений.
 
         bg_path = self.backgrounds_path + card
         im = Image.open(bg_path + "_Card.png").convert(self.mode)
 
-        image = self.draw_content(im=im, user=user, uid=uid, bio=bio, rank=rank, xp=xp, profile_bytes=profile_bytes,
+        image = await self.draw_content(im=im, user=user, uid=uid, bio=bio, rank=rank, xp=xp, profile_bytes=profile_bytes,
                                  vision=vision, premium=premium)
-        buffer = BytesIO()
-        image.save(buffer, 'png')
-        buffer.seek(0)
-        return buffer
+        return image
+
 
 
 

@@ -88,6 +88,13 @@ class Database:
                                       'gif BYTEA NOT NULL, ' \
                                       'PRIMARY KEY(id));'
 
+        on_create_table_user_settings_query = 'CREATE TABLE IF NOT EXISTS user_settings (' \
+                                              'id SERIAL NOT NULL, ' \
+                                              'user_id BIGINT NOT NULL, ' \
+                                              'guild BIGINT NOT NULL, ' \
+                                              'is_premium_background BOOLEAN DEFAULT FALSE, ' \
+                                              'PRIMARY KEY(id));'
+
 
         on_create_function_on_update_item_owner = 'CREATE OR REPLACE FUNCTION on_switch_vision_owner() ' \
                                                   'RETURNS trigger AS $tab$ ' \
@@ -104,6 +111,7 @@ class Database:
                                                     'AFTER UPDATE OF user_id ON items ' \
                                                     'FOR EACH ROW EXECUTE PROCEDURE on_switch_vision_owner();'
 
+        await self.conn.fetch(on_create_table_user_settings_query)
         await self.conn.fetch(on_create_table_namecards_query)
         await self.conn.fetch(on_create_table_users_query)
         await self.conn.fetch(on_create_table_items_query)

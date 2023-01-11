@@ -1,5 +1,6 @@
 {
   "background_path" : "utilities/inventory_images/background.png",
+  "background_size" : [1080, 600],
   "border_path" : "utilities/inventory_images/border.png",
   "mask" : "utilities/inventory_images/usual.png",
   "dict_stars" :
@@ -26,6 +27,7 @@
   "interval_btw_holders_k" : [0.06, 0.08],
   "chosen_img_pos_k" : [0.5, 0.8333],
   "chosen_item_size_k" : [0.25, 0.25],
+  "holder_counter_paddings_k" : [0.9, 0.9],
 
   "mode" : "RGBA",
 
@@ -33,6 +35,9 @@
   "panel_item_holders_paddings_k" : [0.05, 0.8],
   "panel_item_holders_size_k" : 0.16,
   "panel_items_size" : 10,
-  "panel_interval_btw_holders_k" : 0.01
+  "panel_interval_btw_holders_k" : 0.01,
+
+  "font_path" : "utilities/fonts/zh-cn.ttf",
+  "small_font_size" : 40
 
 }

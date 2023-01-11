@@ -1,4 +1,6 @@
 import base64
+import time
+
 from PIL import Image
 import discord
 import discord.app_commands
@@ -17,7 +19,7 @@ from bot_ui_kit.ui_profile_interaction import UI_ProfileView
 
 
 async def cmd_card(interaction: discord.Interaction, user: discord.Member = None) -> None:
-
+    start = time.monotonic()
     await interaction.response.defer()
 
     if user is None:
@@ -29,11 +31,13 @@ async def cmd_card(interaction: discord.Interaction, user: discord.Member = None
     guild_id = interaction.guild.id
     user_id = user.id
     select_users_join_visions_join_premium_join_files = \
-                                "SELECT xp, rank, uid, bio, namecard, visions.vision, premium_users.id, files.gif " \
+                                "SELECT xp, rank, uid, bio, namecard, visions.vision, premium_users.id, files.gif, " \
+                                "user_settings.is_premium_background " \
                                 "FROM users " \
-                                "LEFT JOIN visions ON users.id = visions.user_id " \
+                                "LEFT JOIN visions ON users.id = visions.user_id AND users.guild = visions.guild " \
                                 "LEFT JOIN premium_users ON users.id = premium_users.user_id " \
-                                "LEFT JOIN files ON users.id = files.user_id " \
+                                "LEFT JOIN files ON users.id = files.user_id AND users.guild = files.guild " \
+                                "LEFT JOIN user_settings ON users.id = user_settings.user_id AND users.guild = user_settings.guild " \
                                 f"WHERE users.guild = {guild_id} AND users.id = {user_id}"
     conn = await asyncpg.connect(Bot.db.str_connection)
     result = await conn.fetch(select_users_join_visions_join_premium_join_files)
@@ -59,24 +63,33 @@ async def cmd_card(interaction: discord.Interaction, user: discord.Member = None
 
     view = await UI_ProfileView(user=user).create_view()
 
-    if premium:
+    user_settings_is_animated_background_turn_on = result[0][8]
+
+    if premium and user_settings_is_animated_background_turn_on:
         encoded_gif = result[0][7]
         if encoded_gif:
-            gif = get_gif_frames(decode_file(encoded_gif))
+            gif = await get_gif_frames(decode_file(encoded_gif))
             profilecard = Premium_Profile(gif)
 
-            buffer = profilecard.draw(str(user), uid, bio, rank, xp, BytesIO(profile_bytes), vision=vision, premium=premium)
+            created_gif = await profilecard.draw(str(user), uid, bio, rank, xp, BytesIO(profile_bytes), vision=vision, premium=premium)
+            buffer = created_gif.construct()
+            buffer.seek(0)
 
             if interaction.message:
                 return await interaction.followup.edit_message(message_id=interaction.message.id,
                                                                attachments=[dFile(fp=buffer, filename='rank_card.gif')],
                                                                view=view)
 
-            return await interaction.followup.send(file=dFile(fp=buffer, filename='rank_card.gif'), view=view)
+            await interaction.followup.send(file=dFile(fp=buffer, filename='rank_card.gif'), view=view)
+            end = time.monotonic()
+            print(f"Фулл время: {end - start}")
     else:
         profilecard = Profile()
 
-        buffer = profilecard.draw(str(user), uid, bio, rank, xp, BytesIO(profile_bytes), card, vision, premium)
+        image = await profilecard.draw(str(user), uid, bio, rank, xp, BytesIO(profile_bytes), card, vision, premium)
+        buffer = BytesIO()
+        image.save(buffer, 'png')
+        buffer.seek(0)
 
         if interaction.message:
             return await interaction.followup.edit_message(message_id=interaction.message.id, attachments=[dFile(fp=buffer, filename='rank_card.png')], view=view)
@@ -153,7 +166,7 @@ def decode_file(encoded_buffer) -> BytesIO:
     b64decode_buffer = base64.b64decode(encoded_buffer)
     return BytesIO(b64decode_buffer)
 
-async def cmd_get_animated_profile(interaction: discord.Interaction):
+"""async def cmd_get_animated_profile(interaction: discord.Interaction):
     user = interaction.user
     user_id = user.id
     guild = interaction.guild.id
@@ -178,7 +191,7 @@ async def cmd_get_animated_profile(interaction: discord.Interaction):
         buffer.seek(0)
 
         file = discord.File(fp=buffer, filename="gif.gif")
-        await interaction.followup.send(file=file)
+        await interaction.followup.send(file=file)"""
 
 async def cmd_set_animated_profile(interaction: discord.Interaction, gif_url: str):
     user = interaction.user
