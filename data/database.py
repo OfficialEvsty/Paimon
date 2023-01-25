@@ -95,17 +95,38 @@ class Database:
                                               'is_premium_background BOOLEAN DEFAULT FALSE, ' \
                                               'PRIMARY KEY(id));'
 
+        on_create_table_waifu_stats_query = 'CREATE TABLE IF NOT EXISTS waifu_stats (' \
+                                              'id SERIAL NOT NULL, ' \
+                                              'user_id BIGINT NOT NULL, ' \
+                                              'guild BIGINT NOT NULL, ' \
+                                              'energy BIGINT NOT NULL DEFAULT 0, ' \
+                                              'speed BIGINT NOT NULL DEFAULT 0, ' \
+                                              'profit BIGINT NOT NULL DEFAULT 0, ' \
+                                              'luck BIGINT NOT NULL DEFAULT 0, ' \
+                                              'strength BIGINT NOT NULL DEFAULT 0, ' \
+                                              'cost BIGINT NOT NULL DEFAULT 100, ' \
+                                              'lover BIGINT NULL, ' \
+                                              'working_status BOOLEAN DEFAULT False, ' \
+                                              'resting_status BOOLEAN DEFAULT False, ' \
+                                              'PRIMARY KEY(id));'
+        # It's not a waifus in correct of meaning of this word, this multiple of waifu.
+        on_create_table_waifus_query = 'CREATE TABLE IF NOT EXISTS waifus (' \
+                                       'id SERIAL NOT NULL, ' \
+                                       'guild BIGINT NOT NULL, ' \
+                                       'owner BIGINT NOT NULL, ' \
+                                       'waifu BIGINT NOT NULL, ' \
+                                       'PRIMARY KEY(id));'
 
         on_create_function_on_update_item_owner = 'CREATE OR REPLACE FUNCTION on_switch_vision_owner() ' \
-                                                  'RETURNS trigger AS $tab$ ' \
-                                                  'BEGIN ' \
-                                                        f'IF EXISTS (' \
-                                                        f'SELECT * FROM visions WHERE item_id = OLD.id) THEN ' \
-                                                            f'DELETE FROM visions WHERE item_id = OLD.id;' \
-                                                        f'END IF;' \
-                                                        f'RETURN NEW;' \
-                                                  f'END; ' \
-                                                  f'$tab$ LANGUAGE plpgsql'
+                                          'RETURNS trigger AS $tab$ ' \
+                                          'BEGIN ' \
+                                                f'IF EXISTS (' \
+                                                f'SELECT * FROM visions WHERE item_id = OLD.id) THEN ' \
+                                                    f'DELETE FROM visions WHERE item_id = OLD.id;' \
+                                                f'END IF;' \
+                                                f'RETURN NEW;' \
+                                          f'END; ' \
+                                          f'$tab$ LANGUAGE plpgsql'
 
         on_create_trigger_when_item_owner_changes = 'CREATE OR REPLACE TRIGGER owner_changed_trig ' \
                                                     'AFTER UPDATE OF user_id ON items ' \
@@ -120,6 +141,8 @@ class Database:
         await self.conn.fetch(on_create_table_hoyolab_data_query)
         await self.conn.fetch(on_create_table_visions_query)
         await self.conn.fetch(on_create_table_files_query)
+        await self.conn.fetch(on_create_table_waifu_stats_query)
+        await self.conn.fetch(on_create_table_waifus_query)
 
         await self.conn.fetch(on_create_function_on_update_item_owner)
 
@@ -132,7 +155,6 @@ class Database:
         pool = await asyncpg.create_pool(
             dsn=f"postgres://{self.user}:{self.password}@{self.host}:{self.port}/{self.name}")
         async with pool.acquire() as con:
-            print(sql)
             result = await con.fetch(sql)
         await pool.close()
 
@@ -140,8 +162,6 @@ class Database:
 
     async def filter(self, strict_pattern: str, dict_conditions: {}) -> str:
         filter_str = ""
-        if len(dict_conditions) == 0:
-            print("В словаре нету значений.")
         for (column, condition_val) in dict_conditions.items():
             if condition_val is str:
                 filter_str += f"({column} = '{condition_val}')"
@@ -149,12 +169,12 @@ class Database:
                 filter_str += f"({column} = {condition_val}) "
             filter_str += f" {strict_pattern} "
         filter_str = filter_str[:(len(filter_str) - len(strict_pattern) - 2)]
-        print(f"Фильтр: {filter_str}")
         return filter_str
 
     async def get_db(self, table: str, conditions_str: str, list_col_to_get: []):
+        conn = await asyncpg.connect(Database.str_connection)
         is_entry_exists = f'SELECT id FROM {table} WHERE {conditions_str}'
-        if not await self.fetch(is_entry_exists):
+        if not await conn.fetch(is_entry_exists):
             return []
         constructed_str = ""
         for i in range(len(list_col_to_get)):
@@ -164,11 +184,10 @@ class Database:
                 constructed_str += f"{list_col_to_get[i]}"
 
         sql_query = f"SELECT {constructed_str} FROM {table} WHERE {conditions_str}"
-        print(sql_query)
-        result = await self.fetch(sql_query)
-        print(result)
+        result = await conn.fetch(sql_query)
         if result:
             return result
+        await conn.close()
 
 
 

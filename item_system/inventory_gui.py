@@ -33,6 +33,10 @@ class Inventory_GUI:
 
         # Trade
         self.panel_item_holders_size_k = self.cfg["panel_item_holders_size_k"]
+        self.panel_item_holders_size = (int(self.panel_item_holders_size_k * self.background_size[1]),
+                                        int(self.panel_item_holders_size_k * self.background_size[1]))
+        self.panel_item_holder_paddings = (int(self.panel_item_holders_size[0] * holder_counter_paddings_k[0]),
+                                           int(self.panel_item_holders_size[1] * holder_counter_paddings_k[1]))
         self.panel_item_holders_paddings_k = self.cfg["panel_item_holders_paddings_k"]
         self.panel_items_size = self.cfg["panel_items_size"]
         self.panel_interval_btw_holders_k = self.cfg["panel_interval_btw_holders_k"]
@@ -41,8 +45,7 @@ class Inventory_GUI:
         small_font_size = self.cfg["small_font_size"]
         self.small_font = ImageFont.truetype(font=self.font_path, size=small_font_size)
 
-
-    def draw(self, chosen_item: int = None) -> BytesIO:
+    def draw(self, chosen_item: int = None, is_trade_mode: bool = False) -> BytesIO:
         pass
         # Создаем бэкграунд
         im = Image.open(self.background_path).convert(self.mode)
@@ -61,19 +64,25 @@ class Inventory_GUI:
             indent_w = (width - (n * holder_len + (n - 1) * interval)) // 2
             for i in range(self.panel_items_size):
                 if i < len(self.__dict_items_to_trade__):
-                    item_holder = Image.open(str(self.dict_rarity[self.__dict_items_to_trade__[i].rarity]))
+                    item_holder = Image.open(str(self.dict_rarity[self.__dict_items_to_trade__[i][0].rarity]))
 
                     item_holder = item_holder.resize(
                         (int(height * self.panel_item_holders_size_k), int(height * self.panel_item_holders_size_k)))
 
-
-                    item_img = Image.open(self.__dict_items_to_trade__[i].img_url)
+                    item_img = Image.open(self.__dict_items_to_trade__[i][0].img_url)
                     resized_item_img = item_img.resize(
                         (int(item_holder.width), int(item_holder.width)))
                     mask = resized_item_img.copy()
                     resized_item_img.putalpha(255)
 
                     item_holder.paste(im=resized_item_img, mask=mask)
+
+                    count = len(self.__dict_items_to_trade__[i])
+
+                    if count > 1:
+                        draw_holder = ImageDraw.Draw(item_holder)
+                        draw_holder.text(xy=self.panel_item_holder_paddings, text=str(count), fill=(255, 255, 255),
+                                         anchor="rs", font=self.small_font)
                 else:
                     item_holder = Image.open(str(self.dict_rarity["default"])).convert(self.mode)
 
@@ -120,10 +129,12 @@ class Inventory_GUI:
                     draw_holder.text(xy=self.holder_counter_paddings, text=str(count), fill=(255, 255, 255),
                                      anchor="rs", font=self.small_font)
                 if chosen_item == i:
-                    resized_chosen_item_img = item_img.resize((int(width * self.chosen_item_size_k[0]), int(width * self.chosen_item_size_k[1])))
-                    (w_item, h_item) = resized_chosen_item_img.size
+                    if not is_trade_mode:
+                        resized_chosen_item_img = item_img.resize((int(width * self.chosen_item_size_k[0]), int(width * self.chosen_item_size_k[1])))
+                        (w_item, h_item) = resized_chosen_item_img.size
+                        im.paste(resized_chosen_item_img, (int(width * self.chosen_img_pos_k[0]) - w_item // 2, int(height * self.chosen_img_pos_k[1]) - h_item // 2), resized_chosen_item_img)
+
                     item_holder.paste(resized_border, resized_border)
-                    im.paste(resized_chosen_item_img, (int(width * self.chosen_img_pos_k[0]) - w_item // 2, int(height * self.chosen_img_pos_k[1]) - h_item // 2), resized_chosen_item_img)
             else:
                 item_holder = Image.open(str(self.dict_rarity["default"])).convert(self.mode)
 

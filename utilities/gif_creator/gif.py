@@ -32,7 +32,9 @@ class Gif:
             optimize=True,
             duration=self.duration,
             disposal=2,
-            loop=0
+            loop=0,
+            compress_level=1,
+            compress_type=3
         )
         end = time.monotonic()
         print(f"Время сбора гифки: {end - start}")
@@ -56,10 +58,9 @@ def convert_to_bytea(opened_gif_url: HTTPResponse) -> BytesIO:
     with Image.open(buffer) as gif:
         if not is_gif_size_valid(gif.size):
             raise IncorrectGifSize(gif.size)
-        if gif.n_frames > 75:
+        if gif.n_frames > 250:
             raise MuchFramesInGif(gif.n_frames)
 
-    #print(buffer.getvalue())
     return buffer
 
 
@@ -71,7 +72,7 @@ async def get_gif_frames(gif_bytes_io: BytesIO) -> Gif:
         for frame in ImageSequence.Iterator(gif):
             start = time.monotonic()
             buffer = BytesIO()
-            frame.save(buffer, 'png')
+            frame.save(buffer, 'png', compress_level=1, compress_type=3)
             end = time.monotonic()
             print(end - start)
             frames.append(buffer)
@@ -79,6 +80,8 @@ async def get_gif_frames(gif_bytes_io: BytesIO) -> Gif:
     end_ = time.monotonic()
     print(end_ - start_)
     return worked_gif
+
+
 
 
 def is_gif_size_valid(size: ()) -> bool:

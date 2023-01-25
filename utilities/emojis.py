@@ -6,3 +6,5 @@ class Emoji:
     Daily: str = "<:Daily:1061021825741623326>"
     Right_Arrow: str = "▶️"
     Left_Arrow: str = "◀️"
+    Accept_Mark: str = "✅"
+    Revert_Mark: str = "❎"

@@ -11,9 +11,10 @@ from transaction_system.transaction import Transaction
 
 
 @usage.add_item_use
-async def namecard(interaction: discord.Interaction, item: Item):
+async def namecard(interaction: discord.Interaction, items: []):
     pattern = "_Item.png"
     path = "item_system/item_images/"
+    item = items[0]
     name = item.img_url.replace(pattern, "").replace(path, "")
     user = interaction.user
     user_id = user.id
@@ -28,9 +29,10 @@ async def namecard(interaction: discord.Interaction, item: Item):
 
 
 @usage.add_item_use
-async def vision(interaction: discord.Interaction, item: Item):
+async def vision(interaction: discord.Interaction, items: []):
     user_id = interaction.user.id
     guild = interaction.guild.id
+    item = items[0]
     path = "item_system/item_images/visions/"
     format_file = ".png"
 
@@ -56,30 +58,47 @@ async def vision(interaction: discord.Interaction, item: Item):
 
 
 @usage.add_item_use
-async def wishing(interaction: discord.Interaction, item: Item):
+async def wishing(interaction: discord.Interaction, items: []):
     user = interaction.user
     guild = interaction.guild
+    item = items[0]
+
     min_money = 50
     max_money = 500
 
-    money = random.randint(min_money, max_money)
-    list_items = []
-    with open("item_system/item_use/wishing.json", "r") as file:
-        group_type_chance_drop_dict = json.loads(file.read())
-    for (type, chance) in group_type_chance_drop_dict.items():
-        result = random.random()
-        print(result, chance)
-        if result <= chance:
-            items = Generator.generate_random_items_by_group_type(type, 1)
-            list_items.extend(items)
+    generated_items = []
+    generated_money = 0
+    for item in items:
+        money = random.randint(min_money, max_money)
+        generated_money += money
+        with open("item_system/item_use/wishing.json", "r") as file:
+            group_type_chance_drop_dict = json.loads(file.read())
+            count = 0
+        for (type, chance) in group_type_chance_drop_dict.items():
+            result = random.random()
+            if result <= chance:
+                generated_items.extend(Generator.generate_random_items_by_group_type(type, 1))
 
-    reward = Reward(guild, user, money, items=list_items)
+    dict_items = {}
+
+    if len(generated_items) > 0:
+        if generated_items[0].stackable:
+            dict_items[count].extend(generated_items)
+            count += 1
+        else:
+            for item in generated_items:
+                dict_items[count] = [item]
+                count += 1
+
+
+
+    reward = Reward(guild, user, generated_money, items=dict_items)
     await reward.apply()
 
-    reason = f"{user} помолился, использовав {item.name}"
-    transaction = Transaction(user, reason, money, received_items=list_items)
+    reason = f"{user} помолился, использовав {item.name} {len(items)} шт."
+    transaction = Transaction(user, reason, generated_money, received_items=dict_items)
     await transaction.send()
-
+    #return money, dict_items
 
 
 

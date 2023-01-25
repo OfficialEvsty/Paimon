@@ -1,6 +1,7 @@
 import discord
 from utilities.emojis import Emoji
 
+
 class Trade_Embed(discord.Embed):
     def __init__(self, trade):
         super().__init__()

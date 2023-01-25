@@ -1,8 +1,7 @@
 from data.database import Database
 from hoyolab.genshin_statistics.genshin_user import Genshin_User as G_user
 from hoyolab.hoyolab_user import Hoyolab
-from gui.genshin_gui import Genshin_GUI as GGUI
-from gui.hoyolab_gui import Hoyolab_GUI
+from gui.hoyolab.hoyolab_gui import Hoyolab_GUI
 from bot_ui_kit.ui_hoyolab_interaction import UI_HoyolabView
 import asyncpg
 import discord

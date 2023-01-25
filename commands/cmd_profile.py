@@ -9,7 +9,8 @@ from card_profile.premium_profile import Premium_Profile
 from discord import File as dFile
 from bot import Bot
 from io import BytesIO
-from utilities.gif_creator.gif import get_img_file, convert_to_bytea, Gif, get_gif_frames
+from utilities.gif_creator.gif import get_img_file, convert_to_bytea, Gif, get_gif_frames, MuchFramesInGif, \
+    FramesNotFound, IncorrectGifURL
 import asyncpg
 import base64
 import psycopg2
@@ -32,12 +33,13 @@ async def cmd_card(interaction: discord.Interaction, user: discord.Member = None
     user_id = user.id
     select_users_join_visions_join_premium_join_files = \
                                 "SELECT xp, rank, uid, bio, namecard, visions.vision, premium_users.id, files.gif, " \
-                                "user_settings.is_premium_background " \
+                                "hoyolab_data.ltuid, user_settings.is_premium_background " \
                                 "FROM users " \
                                 "LEFT JOIN visions ON users.id = visions.user_id AND users.guild = visions.guild " \
                                 "LEFT JOIN premium_users ON users.id = premium_users.user_id " \
                                 "LEFT JOIN files ON users.id = files.user_id AND users.guild = files.guild " \
                                 "LEFT JOIN user_settings ON users.id = user_settings.user_id AND users.guild = user_settings.guild " \
+                                "LEFT JOIN hoyolab_data ON users.id = hoyolab_data.user_id " \
                                 f"WHERE users.guild = {guild_id} AND users.id = {user_id}"
     conn = await asyncpg.connect(Bot.db.str_connection)
     result = await conn.fetch(select_users_join_visions_join_premium_join_files)
@@ -53,6 +55,11 @@ async def cmd_card(interaction: discord.Interaction, user: discord.Member = None
     card = result[0][4]
     vision = result[0][5]
     premium = result[0][6]
+    hoyolab = result[0][8]
+    if hoyolab:
+        is_hoyolab = True
+    else:
+        is_hoyolab = False
 
     if uid is None:
         uid = "Не ввёден"
@@ -63,15 +70,18 @@ async def cmd_card(interaction: discord.Interaction, user: discord.Member = None
 
     view = await UI_ProfileView(user=user).create_view()
 
-    user_settings_is_animated_background_turn_on = result[0][8]
+    user_settings_is_animated_background_turn_on = result[0][9]
 
     if premium and user_settings_is_animated_background_turn_on:
         encoded_gif = result[0][7]
         if encoded_gif:
             gif = await get_gif_frames(decode_file(encoded_gif))
-            profilecard = Premium_Profile(gif)
 
-            created_gif = await profilecard.draw(str(user), uid, bio, rank, xp, BytesIO(profile_bytes), vision=vision, premium=premium)
+            gif_size = (546, 260)
+            profilecard = Premium_Profile(gif, gif_size)
+
+            created_gif = await profilecard.draw(str(user), uid, bio, rank, xp, BytesIO(profile_bytes), vision=vision,
+                                                 premium=premium, is_hoyolab=is_hoyolab)
             buffer = created_gif.construct()
             buffer.seek(0)
 
@@ -83,10 +93,14 @@ async def cmd_card(interaction: discord.Interaction, user: discord.Member = None
             await interaction.followup.send(file=dFile(fp=buffer, filename='rank_card.gif'), view=view)
             end = time.monotonic()
             print(f"Фулл время: {end - start}")
+
+        else:
+            await interaction.followup.send(f"Установите premium изображение в профиль. (GIF)", delete_after=5)
+
     else:
         profilecard = Profile()
-
-        image = await profilecard.draw(str(user), uid, bio, rank, xp, BytesIO(profile_bytes), card, vision, premium)
+        image = await profilecard.draw(str(user), uid, bio, rank, xp, BytesIO(profile_bytes), card, vision, premium,
+                                       is_hoyolab)
         buffer = BytesIO()
         image.save(buffer, 'png')
         buffer.seek(0)

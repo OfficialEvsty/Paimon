@@ -9,17 +9,18 @@ from trade_system.trade_embed import Trade_Embed
 
 class Trade:
     id: int = 0
+    minute = 60
 
-    def __init__(self, owner_user: discord.User, items: [], money: int, timer: int = None):
-
+    def __init__(self, owner_user: discord.User, items: {}, money: int = None, timer: int = None):
         Trade.id += 1
         self.id = Trade.id
         self.owner: discord.User = owner_user
         self.items = items
         self.cost: int = money
         if timer is None:
-            self.timer = 180
-        self.timer = timer
+            self.timer = 3 * self.minute
+        else:
+            self.timer = timer
         self.is_purchased = False
 
     async def create_trade(self, interaction: discord.Interaction):
@@ -47,4 +48,6 @@ class Trade:
         else:
             msg = await interaction.channel.send(file=file, view=view, embed=embed)
         view.sourced_msg = msg
+
+
 

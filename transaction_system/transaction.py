@@ -4,13 +4,13 @@ from utilities.embeds.transaction_embed import Transaction_Embed
 
 
 class Transaction:
-    def __init__(self, member: discord.Member, reason: str, money: int = None, received_items: [] = None,
-                 given_items: [] = None):
+    def __init__(self, member: discord.Member, reason: str, money: int = None, received_items: {} = None,
+                 given_items: {} = None):
         self.member: discord.Member = member
         self.reason: str = reason
         self.money: int = money
-        self.received_items: [] = received_items
-        self.given_items: [] = given_items
+        self.received_items: {} = received_items
+        self.given_items: {} = given_items
 
     async def send(self):
         transaction_channel = await get_transactions_channel(self.member.guild)

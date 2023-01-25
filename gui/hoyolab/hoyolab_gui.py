@@ -6,7 +6,7 @@ from urllib.request import urlopen
 
 class Hoyolab_GUI:
     def __init__(self, ):
-        with open("gui/hoyolab_settings.json") as file:
+        with open("gui/hoyolab/hoyolab_settings.json") as file:
             self.cfg = json.loads(file.read())
         self.font_path = self.cfg["font_path"]
         self.font_big_size = self.cfg["font_big_size"]

@@ -37,8 +37,6 @@ class Generator:
             result_items_list.append(item)
         return result_items_list
 
-
-
     @classmethod
     def create_item(cls, item_type: bytes, item_id: int = None) -> Item:
         key = "type"

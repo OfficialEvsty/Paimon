@@ -10,9 +10,9 @@ from commands.cmd_guild_settings import get_notifications_channel
 from transaction_system.transaction import Transaction
 
 class Reward:
-    def __init__(self, guild: discord.Guild, user: discord.User, money: int = None, items: [] = None, exp: int = None):
+    def __init__(self, guild: discord.Guild, user: discord.User, money: int = None, items: {} = None, exp: int = None):
         self.money = money
-        self.items = items
+        self.items: {} = items
         self.exp = exp
         self.receiver = user
         self.guild = guild
@@ -22,10 +22,18 @@ class Reward:
         conn = await asyncpg.connect(Database.str_connection)
         if self.items is not None:
             notify_str += "Предметы:\n"
-            for i in range(len(self.items)):
-                item_list_to_insert_str = f"INSERT INTO items (guild, user_id, type) VALUES ({self.guild.id}, {self.receiver.id}, {self.items[i].type});"
-                await conn.fetch(item_list_to_insert_str)
-                notify_str += f"\t{self.items[i].name} добавлен в инвентарь {self.receiver}."
+            items_list_to_insert_str = ""
+            for slot in self.items.values():
+                for item in slot:
+                    items_list_to_insert_str += f"INSERT INTO items (guild, user_id, type) VALUES ({self.guild.id}, {self.receiver.id}, {item.type});"
+                    notify_str += f"\t{item.name} добавлен в инвентарь {self.receiver}."
+
+            items_add_to_user_query = "DO $$ " \
+                                      "BEGIN " \
+                                        f"{items_list_to_insert_str}" \
+                                      f"END $$;"
+            await conn.fetch(items_add_to_user_query)
+
 
         select_previous_queries_query = f"SELECT rank, xp, coins FROM users WHERE guild = {self.guild.id} AND id = {self.receiver.id}"
         result = await conn.fetch(select_previous_queries_query)

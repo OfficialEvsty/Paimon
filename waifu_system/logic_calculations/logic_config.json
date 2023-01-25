@@ -1,0 +1,8 @@
+{
+  "base_working_time" : 24,
+  "base_resting_time" : 24,
+  "base_money_profit" : 100,
+  "base_lvl_up_cost" : 500,
+
+  "speed_lvl_const" : 20
+}

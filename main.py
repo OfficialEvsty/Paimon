@@ -13,13 +13,17 @@ import commands.cmd_main
 import commands.cmd_inventory
 import commands.cmd_money
 import commands.cmd_hoyolab
+import commands.cmd_waifu
 from commands.cmd_guild_settings import set_notifications_channel_id, set_transactions_channel_id
 import discord.app_commands
 import music.custom_music
 from item_system.inventory import Inventory
 from item_system.generator import Generator
+from waifu_system.waifu import Waifu
+from waifu_system.harem import Harem
 from rewarding.reward import Reward
 from premium_system.premium import give_premium
+from utilities.gif_creator.gif import FramesNotFound, IncorrectGifURL, MuchFramesInGif
 
 
 bot = Bot()
@@ -127,8 +131,15 @@ async def app_show_genshin_stats(interaction: discord.Interaction):
 
 @bot.tree.command(name="set_animated_profile", description="Установить анимированный профиль.")
 async def app_set_animated_profile(interaction: discord.Interaction, url: str):
-    await interaction.response.defer()
-    await commands.cmd_profile.cmd_set_animated_profile(interaction, url)
+    await interaction.response.defer(thinking=False)
+    try:
+        await commands.cmd_profile.cmd_set_animated_profile(interaction, url)
+    except IncorrectGifURL:
+        await interaction.channel.send("Некорректная ссылка на изображение, расширение должно быть `.gif`.",
+                                       delete_after=5)
+    except MuchFramesInGif:
+        await interaction.channel.send("В gif файле слишком много кадров, ограничение: не более 250.",
+                                       delete_after=5)
 
 
 @bot.tree.command(name="switch_premium_backgroung_mode", description="Поменять бэкграунд на премиум.")
@@ -140,6 +151,31 @@ async def turn_on_or_off_animated_background(interaction: discord.Interaction):
     else:
         response = "отключён"
     await interaction.followup.send(f"Premium фон `{response}`")
+
+
+@bot.tree.command(name="claim_waifu", description="Потребовать вайфу в гарем.")
+async def claim_waifu(interaction: discord.Interaction, member: discord.Member):
+    await commands.cmd_waifu.claim_waifu(interaction, member)
+
+
+@bot.tree.command(name="show_harem", description="Показать гарем.")
+async def show_harem(interaction: discord.Interaction):
+    harem_mes = await commands.cmd_waifu.show_harem(interaction)
+    await interaction.channel.send(harem_mes)
+
+@bot.tree.command(name="upgrade_waifu", description="Повысить уровень вайфу.")
+async def upgrade_waifu(interaction: discord.Interaction, member: discord.Member):
+    await Waifu.upgrade_waifu_attribute(member)
+    await Waifu.upgrade_waifu_cost(member, 200)
+    await interaction.response.send_message(f"Уровень {member} повышен")
+
+
+@bot.tree.command(name="waifu_work", description="Ваша вайфу принесет вам прибыль.")
+async def waifu_work(interaction: discord.Interaction, member: discord.Member):
+    harem = Harem(interaction.user, interaction.guild)
+    await harem.get_info()
+    await harem.do_working(member)
+    await interaction.response.send_message(f"Вайфу {member} отправлена на работу.")
 
 bot.startup()
 os.environ['TOKEN'] = 'ODYwODA3ODc5NDE3NTI4MzIx.G8IL1T.IoPoLzzGIPpQr4UZNypmh8vR1JpEkcYe_-9CEk'

@@ -27,7 +27,7 @@ class Reward_GUI():
         self.panel_items_size = self.cfg["panel_items_size"]
         self.panel_interval_btw_holders_k = self.cfg["panel_interval_btw_holders_k"]
 
-    def draw(self, user: discord.User, items: [], money) -> BytesIO:
+    def draw(self, user: discord.User, items: {}, money) -> BytesIO:
         im = Image.open(self.background_path)
         """back = Image.open("utilities/images/back.jpg").convert(self.mode)
         back = back.resize(im.size)"""
@@ -55,13 +55,13 @@ class Reward_GUI():
         print(n, length)
         for i in range(n + length):
             if i < n:
-                item_holder = Image.open(str(self.dict_rarity[items[i].rarity]))
+                item_holder = Image.open(str(self.dict_rarity[items[i][0].rarity]))
 
                 item_holder = item_holder.resize(
                     (int(height * self.panel_item_holders_size_k), int(height * self.panel_item_holders_size_k)))
 
 
-                item_img = Image.open(items[i].img_url)
+                item_img = Image.open(items[i][0].img_url)
                 resized_item_img = item_img.resize(
                     (int(item_holder.width), int(item_holder.width)))
                 mask = resized_item_img.copy()

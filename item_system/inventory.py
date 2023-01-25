@@ -6,10 +6,7 @@ from data.database import Database
 
 class Inventory:
     def __init__(self, list_items: []):
-        self.const_list_items = list_items
         self.list_items = list_items
-        self.page_size = 10
-        self.items_to_trade = []
 
     @classmethod
     async def get_inventory(cls, interaction: discord.Interaction):
@@ -35,18 +32,21 @@ class Inventory:
         await Bot.db.add_db(table, await Bot.db.filter(condition_pattern, conditions_dict), dict_container)
 
     @classmethod
-    async def remove_item(cls, interaction: discord.Interaction, item_id : int):
-        """
+    async def remove_items(cls, items_to_remove: []):
+        if_str_delete = f""
+        for item in items_to_remove:
+            if_str_delete += f"IF EXISTS (SELECT id FROM items WHERE id = {item.id}) THEN " \
+                                f"DELETE FROM items WHERE id = {item.id};" \
+                             f"END IF;"
 
-        :rtype: object
-        """
-        table = "items"
-        user_id = interaction.user.id
-        guild_id = interaction.guild.id
+        delete_items_query = f"DO $$ " \
+                             f"BEGIN " \
+                                f"{if_str_delete}" \
+                             f"END $$;"
 
-        condition_pattern = "AND"
-        conditions_dict = {"user_id" : user_id, "guild" : guild_id, "id" : item_id}
-        await Bot.db.delete(table, await Bot.db.filter(condition_pattern, conditions_dict))
+        conn = await asyncpg.connect(Database.str_connection)
+        await conn.fetch(delete_items_query)
+        await conn.close()
 
     @classmethod
     async def withdraw_items_from_inventory(cls, guild: discord.Guild, items: []):

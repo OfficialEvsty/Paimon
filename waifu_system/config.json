@@ -1,0 +1,7 @@
+{
+  "energy_upgrade_chance" : 0.7,
+  "speed_upgrade_chance" : 0.7,
+  "profit_upgrade_chance" : 0.8,
+  "strength_upgrade_chance" : 0.75,
+  "luck_upgrade_chance" : 0.5
+}

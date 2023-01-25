@@ -16,7 +16,6 @@ import shop_system.market
 import asyncpg
 import schedule
 import aiohttp
-from discord.ext import commands, ipc
 
 
 class Config:
