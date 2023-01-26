@@ -1,3 +1,5 @@
+import discord
+from waifu_system.waifu_storing.waifu_db import delete_waifu
 from waifu_system.waifu import WaifuStats, Waifu
 from data.database import Database
 from discord import User, Guild, Member
@@ -7,7 +9,8 @@ from waifu_system.waifu_logic import WaifuLogic
 
 
 class Harem:
-    def __init__(self, owner: User, guild: Guild):
+    def __init__(self, owner: Member, guild: Guild):
+        self.owner = owner
         self.owner_id = owner.id
         self.guild: Guild = guild
         self.waifu_list = []
@@ -37,7 +40,7 @@ class Harem:
         for i in range(len(waifus_records)):
             waifu_id = waifus_records[i][0]
             get_waifu_info_query = "SELECT energy, speed, profit, luck, strength, cost, lover, working_status, " \
-                                   "resting_status " \
+                                   "resting_status, gift_status " \
                                    "FROM waifu_stats " \
                                    f"WHERE guild = {guild_id} AND user_id = {waifu_id}"
             waifu_info_record = await conn.fetch(get_waifu_info_query)
@@ -52,12 +55,18 @@ class Harem:
             lover = waifu_list_info[6]
             is_working = waifu_list_info[7]
             is_resting = waifu_list_info[8]
+            is_gift_ready = waifu_list_info[9]
 
-            member = await guild.fetch_member(waifu_id)
+            try:
+                member = await guild.fetch_member(waifu_id)
+            except discord.NotFound:
+                await delete_waifu(waifu_id=waifu_id, guild=self.guild)
+                continue
+
             waifu_stats = WaifuStats(member=member, energy=energy, speed=speed, profit=profit, luck=luck,
                                      strength=strength, cost=cost, lover_user=lover, is_working=is_working,
-                                     is_resting=is_resting)
-            waifu = Waifu(member)
+                                     is_resting=is_resting, is_gift_ready=is_gift_ready)
+            waifu = Waifu(member, self.owner)
             waifu.waifu_stats = waifu_stats
             waifu.logic = WaifuLogic(waifu_stats)
             waifu_list.append(waifu)
@@ -84,7 +93,8 @@ class Harem:
                                         "IF EXISTS(" \
                                         "SELECT * FROM waifus " \
                                         f"WHERE guild = {member.guild.id} AND waifu = {member.id}) THEN " \
-                                            f"UPDATE waifus SET owner = {self.owner_id}; " \
+                                            f"UPDATE waifus SET owner = {self.owner_id} " \
+                                            f"WHERE guild = {member.guild.id} AND waifu = {member.id}; " \
                                         f"ELSE " \
                                             f"INSERT INTO waifus (guild, owner, waifu) " \
                                             f"VALUES ({member.guild.id}, {self.owner_id}, {member.id}); " \
@@ -93,7 +103,7 @@ class Harem:
                                      f"END IF;" \
                                      f"END $$;"
         await conn.fetch(update_or_insert_waifu_sql)
-        waifu = Waifu(member)
+        waifu = Waifu(member, self.owner)
         self.waifu_list.append(waifu)
 
     async def do_working(self, member: Member):
@@ -104,7 +114,8 @@ class Harem:
         for waifu in self.waifu_list:
             if waifu.member.id == member.id:
                 return waifu
-            raise WaifuNotFound("Waifu not found in current list.")
+
+        raise WaifuNotFound("Waifu not found in current list.")
 
 
 class WaifuNotFound(Exception):

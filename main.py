@@ -163,6 +163,7 @@ async def show_harem(interaction: discord.Interaction):
     harem_mes = await commands.cmd_waifu.show_harem(interaction)
     await interaction.channel.send(harem_mes)
 
+
 @bot.tree.command(name="upgrade_waifu", description="Повысить уровень вайфу.")
 async def upgrade_waifu(interaction: discord.Interaction, member: discord.Member):
     await Waifu.upgrade_waifu_attribute(member)
@@ -176,6 +177,25 @@ async def waifu_work(interaction: discord.Interaction, member: discord.Member):
     await harem.get_info()
     await harem.do_working(member)
     await interaction.response.send_message(f"Вайфу {member} отправлена на работу.")
+
+
+@bot.tree.command(name="take_gift", description="Принять подарок от вайфу.")
+async def take_gift(interaction: discord.Interaction, member: discord.Member):
+    harem = Harem(interaction.user, interaction.guild)
+    await harem.get_info()
+    waifu = harem.find_waifu(member)
+    await waifu.gift()
+    await interaction.response.send_message(f"Вайфу {member} подарила Вам подарок.")
+
+
+@take_gift()
+async def set_attrs(interaction: discord.Interaction, member: discord.Member):
+    await commands.cmd_waifu.change_waifu_attrs()
+    await interaction.response.send_message(f"Вайфу {member} подарила Вам подарок.")
+
+    set_attrs_command = discord.app_commands.Command(callback=set_attrs, name="Атрибуты", description="Установить атрибуты выбранной вайфу.")
+
+    param = discord.app_commands.Parameter(command=set_attrs_command, parent=set_attrs_command)
 
 bot.startup()
 os.environ['TOKEN'] = 'ODYwODA3ODc5NDE3NTI4MzIx.G8IL1T.IoPoLzzGIPpQr4UZNypmh8vR1JpEkcYe_-9CEk'

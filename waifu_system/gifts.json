@@ -1,0 +1,8 @@
+{
+  "1" :
+  {
+    "chance" : 0.5,
+    "min_count" : 1,
+    "max_count" : 5
+  }
+}

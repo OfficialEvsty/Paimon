@@ -14,7 +14,7 @@ import json
 class WaifuStats:
     def __init__(self, member: Member, energy: int = 0, speed: int = 0, profit: int = 0, luck: int = 0,
                  strength: int = 0, cost: int = 100, lover_user: User = None, is_working: bool = False,
-                 is_resting: bool = False):
+                 is_resting: bool = False, is_gift_ready: bool = False):
         self.member = member
         self.lvl = energy + speed + profit + luck + strength
         self.energy_attr = energy
@@ -24,6 +24,7 @@ class WaifuStats:
         self.strength_attr = strength
         self.is_working = is_working
         self.is_resting = is_resting
+        self.is_gift_ready = is_gift_ready
 
         self.lover = lover_user
 
@@ -32,11 +33,12 @@ class WaifuStats:
 
 # Waifu class represents profile of user, which became waifu on guild.
 class Waifu:
-    def __init__(self, member: Member):
+    def __init__(self, member: Member, owner: Member = None):
         self.member = member
         self.guild = member.guild.id
         self.waifu_stats = None
         self.logic = None
+        self.owner = owner
 
     @staticmethod
     async def upgrade_waifu_attribute(member: Member):
@@ -64,6 +66,9 @@ class Waifu:
 
     async def work(self):
         await self.logic.work()
+
+    async def gift(self):
+        await self.logic.take_gift(self)
 
 
 

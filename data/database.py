@@ -108,6 +108,7 @@ class Database:
                                               'lover BIGINT NULL, ' \
                                               'working_status BOOLEAN DEFAULT False, ' \
                                               'resting_status BOOLEAN DEFAULT False, ' \
+                                              'gift_status BOOLEAN DEFAULT False, ' \
                                               'PRIMARY KEY(id));'
         # It's not a waifus in correct of meaning of this word, this multiple of waifu.
         on_create_table_waifus_query = 'CREATE TABLE IF NOT EXISTS waifus (' \

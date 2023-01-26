@@ -9,6 +9,7 @@ from gui.reward_gui import Reward_GUI
 from commands.cmd_guild_settings import get_notifications_channel
 from transaction_system.transaction import Transaction
 
+
 class Reward:
     def __init__(self, guild: discord.Guild, user: discord.User, money: int = None, items: {} = None, exp: int = None):
         self.money = money
@@ -17,7 +18,7 @@ class Reward:
         self.receiver = user
         self.guild = guild
 
-    async def apply(self) -> str:
+    async def apply(self, is_notify: bool = True) -> str:
         notify_str = ""
         conn = await asyncpg.connect(Database.str_connection)
         if self.items is not None:
@@ -59,18 +60,19 @@ class Reward:
             notify_str += f"\t{self.receiver} получил {self.exp} опыта."
         await conn.close()
 
+        if self.money is None and self.items is None:
+            return notify_str
+        if is_notify:
+            await self.notify()
+        return notify_str
+
+    async def notify(self):
         reward_notification = Reward_GUI()
         buffer = reward_notification.draw(user=self.receiver, money=self.money, items=self.items)
         file = discord.File(fp=buffer, filename="reward_notification.png")
-
-
-        if self.money is None and self.items is None:
-            return notify_str
         notification_channel = await get_notifications_channel(self.guild)
         if notification_channel:
             await notification_channel.send(f"`{self.receiver}` получил награду", file=file)
-
-        return notify_str
 
 
 async def level_up_reward(guild, user):

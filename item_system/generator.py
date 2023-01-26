@@ -37,6 +37,32 @@ class Generator:
             result_items_list.append(item)
         return result_items_list
 
+    """@classmethod
+    def generate_items_by_type(cls, item_type: int, count: int = 1) -> []:
+        dicts_list_by_group_type = []
+        for i in range(len(cls.all_items_by_type)):
+            if ("group_type", group_type) in cls.all_items_by_type[i].items():
+                dicts_list_by_group_type.append(cls.all_items_by_type[i])
+
+        result_dicts_list = []
+        max_len = len(dicts_list_by_group_type)
+        for i in range(count):
+            result_dicts_list.append(dicts_list_by_group_type[random.randint(0, max_len - 1)])
+
+        result_items_list = []
+        for i in range(len(result_dicts_list)):
+            item = Item(item_type=result_dicts_list[i]['type'],
+                        name=result_dicts_list[i]['name'],
+                        rarity=result_dicts_list[i]['rarity'],
+                        description=result_dicts_list[i]['description'],
+                        value=result_dicts_list[i]['value'],
+                        usable=result_dicts_list[i]['usable'],
+                        consumable=result_dicts_list[i]['consumable'],
+                        stackable=result_dicts_list[i]["stackable"],
+                        img_url=result_dicts_list[i]['image_url'])
+            result_items_list.append(item)
+        return result_items_list"""
+
     @classmethod
     def create_item(cls, item_type: bytes, item_id: int = None) -> Item:
         key = "type"

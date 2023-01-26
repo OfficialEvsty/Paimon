@@ -106,7 +106,7 @@ class Leveling:
 
         guild = member.guild
         reward = Reward(guild, member, money=modifiered_money, exp=modifiered_xp)
-        await reward.apply()
+        await reward.apply(is_notify=False)
 
 
         """reason = "Фарм в голосовом канале"
