@@ -8,8 +8,9 @@ class Generator:
     all_items_by_type = {}
 
     def __init__(self):
-        with open("item_system/items.json", 'r') as file:
+        with open("item_system/items.json", 'r', encoding='utf-8') as file:
             Generator.all_items_by_type = json.loads(file.read())
+
 
     @classmethod
     def generate_random_items_by_group_type(cls, group_type: str, count: int = 1) -> []:

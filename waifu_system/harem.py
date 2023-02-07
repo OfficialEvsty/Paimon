@@ -1,123 +1,83 @@
 import discord
-from waifu_system.waifu_storing.waifu_db import delete_waifu
-from waifu_system.waifu import WaifuStats, Waifu
+from waifu_system.waifu import Waifu
 from data.database import Database
-from discord import User, Guild, Member
+from discord import Member
+from waifu_system.waifu_storing.waifu_db import get_waifus_from_db, get_waifu_stats_from_db, add_waifu, \
+    if_exists_get_else_insert_waifu_owner, remove_owner
+from waifu_system.exceptions import WaifuNotFound
+from typing import List
 import asyncpg
 
 from waifu_system.waifu_logic import WaifuLogic
 
 
 class Harem:
-    def __init__(self, owner: Member, guild: Guild):
+    def __init__(self, owner: Member):
         self.owner = owner
-        self.owner_id = owner.id
-        self.guild: Guild = guild
-        self.waifu_list = []
+        self.waifu_owner: Waifu = None
+        self.waifus: List[Waifu] = []
 
     def show(self) -> str:
-        print(self.waifu_list)
+        print(self.waifus)
         showing_string = ""
-        for each in self.waifu_list:
+        for each in self.waifus:
             showing_string += f"Вайфу: {each.member.name}\nСтаты:\n" \
-                              f"Уровень:{each.waifu_stats.lvl}\n" \
-                              f"Удача:{each.waifu_stats.luck_attr}\n" \
-                              f"Скорость:{each.waifu_stats.speed_attr}\n" \
-                              f"Сила:{each.waifu_stats.strength_attr}\n" \
-                              f"Прибыль:{each.waifu_stats.profit_attr}\n" \
-                              f"Энергия:{each.waifu_stats.energy_attr}\n" \
-                              f"Стоимость:{each.waifu_stats.cost}\n\n"
+                              f"Уровень:{each.stats.lvl}\n" \
+                              f"Удача:{each.stats.luck_attr}\n" \
+                              f"Скорость:{each.stats.speed_attr}\n" \
+                              f"Сила:{each.stats.strength_attr}\n" \
+                              f"Прибыль:{each.stats.profit_attr}\n" \
+                              f"Энергия:{each.stats.energy_attr}\n" \
+                              f"Стоимость:{each.stats.cost}\n\n"
         return showing_string
 
-    async def get_info(self):
-        await self._get_waifus_from_db()
+    async def __get_owner(self, conn: asyncpg.Connection) -> Waifu:
+        waifu_id, owner_id = await if_exists_get_else_insert_waifu_owner(self.owner, conn)
+        waifu = await self.owner.guild.fetch_member(waifu_id)
 
-    async def _get_waifus_stats_from_db(self, waifus_records: asyncpg.Record, conn: asyncpg.Connection) -> []:
-        guild: Guild = self.guild
-        guild_id = self.guild.id
-
-        waifu_list = []
-        for i in range(len(waifus_records)):
-            waifu_id = waifus_records[i][0]
-            get_waifu_info_query = "SELECT energy, speed, profit, luck, strength, cost, lover, working_status, " \
-                                   "resting_status, gift_status " \
-                                   "FROM waifu_stats " \
-                                   f"WHERE guild = {guild_id} AND user_id = {waifu_id}"
-            waifu_info_record = await conn.fetch(get_waifu_info_query)
-            waifu_list_info = waifu_info_record[0]
-
-            energy = waifu_list_info[0]
-            speed = waifu_list_info[1]
-            profit = waifu_list_info[2]
-            luck = waifu_list_info[3]
-            strength = waifu_list_info[4]
-            cost = waifu_list_info[5]
-            lover = waifu_list_info[6]
-            is_working = waifu_list_info[7]
-            is_resting = waifu_list_info[8]
-            is_gift_ready = waifu_list_info[9]
-
+        if owner_id:
             try:
-                member = await guild.fetch_member(waifu_id)
+                owner = await self.owner.guild.fetch_member(owner_id)
             except discord.NotFound:
-                await delete_waifu(waifu_id=waifu_id, guild=self.guild)
+                await remove_owner(waifu, conn)
+                owner = None
+        else:
+            owner = None
+
+        stats = await get_waifu_stats_from_db(waifu.guild, waifu_id, conn)
+        logic = WaifuLogic(stats)
+        waifu = Waifu(stats, logic, owner)
+        return waifu
+
+    async def get_waifus(self):
+        conn = await asyncpg.connect(Database.str_connection)
+        self.waifu_owner = await self.__get_owner(conn)
+        waifu_records = await get_waifus_from_db(self.owner, conn)
+        for waifu_list in waifu_records:
+            waifu_id = waifu_list[0]
+            try:
+                stats = await get_waifu_stats_from_db(self.owner.guild, waifu_id, conn)
+            except WaifuNotFound:
                 continue
-
-            waifu_stats = WaifuStats(member=member, energy=energy, speed=speed, profit=profit, luck=luck,
-                                     strength=strength, cost=cost, lover_user=lover, is_working=is_working,
-                                     is_resting=is_resting, is_gift_ready=is_gift_ready)
-            waifu = Waifu(member, self.owner)
-            waifu.waifu_stats = waifu_stats
-            waifu.logic = WaifuLogic(waifu_stats)
-            waifu_list.append(waifu)
-        return waifu_list
-
-    async def _get_waifus_from_db(self):
-        guild_id = self.guild.id
-        user_id = self.owner_id
-        conn = await asyncpg.connect(Database.str_connection)
-        get_waifus_list_query = "SELECT waifu " \
-                                "FROM waifus " \
-                                f"WHERE guild = {guild_id} AND owner = {user_id}"
-        waifu_records = await conn.fetch(get_waifus_list_query)
-        print(waifu_records)
-        waifu_list = await self._get_waifus_stats_from_db(waifu_records, conn)
-
+            logic = WaifuLogic(stats)
+            waifu = Waifu(stats, logic, self.owner)
+            self.waifus.append(waifu)
         await conn.close()
-        self.waifu_list = waifu_list
 
-    async def add_waifu(self, member: Member):
-        conn = await asyncpg.connect(Database.str_connection)
-        update_or_insert_waifu_sql = "DO $$ " \
-                                     "BEGIN " \
-                                        "IF EXISTS(" \
-                                        "SELECT * FROM waifus " \
-                                        f"WHERE guild = {member.guild.id} AND waifu = {member.id}) THEN " \
-                                            f"UPDATE waifus SET owner = {self.owner_id} " \
-                                            f"WHERE guild = {member.guild.id} AND waifu = {member.id}; " \
-                                        f"ELSE " \
-                                            f"INSERT INTO waifus (guild, owner, waifu) " \
-                                            f"VALUES ({member.guild.id}, {self.owner_id}, {member.id}); " \
-                                            f"INSERT INTO waifu_stats (guild, user_id) " \
-                                            f"VALUES ({member.guild.id}, {member.id}); " \
-                                     f"END IF;" \
-                                     f"END $$;"
-        await conn.fetch(update_or_insert_waifu_sql)
-        waifu = Waifu(member, self.owner)
-        self.waifu_list.append(waifu)
+    async def add_waifu(self, owner: Member, member: Member):
+        stats = await add_waifu(owner, member)
+        logic = WaifuLogic(stats)
+        waifu = Waifu(stats, logic, self.owner)
+        self.waifus.append(waifu)
 
     async def do_working(self, member: Member):
         waifu = self.find_waifu(member)
-        await waifu.logic.work()
+        await waifu.logic.work(self.owner)
 
     def find_waifu(self, member: Member) -> Waifu:
-        for waifu in self.waifu_list:
+        for waifu in self.waifus:
             if waifu.member.id == member.id:
                 return waifu
 
-        raise WaifuNotFound("Waifu not found in current list.")
 
 
-class WaifuNotFound(Exception):
-    def __init__(self, txt):
-        self.txt = txt

@@ -1,30 +1,30 @@
 from rewarding.reward import Reward
-from waifu_system.waifu import Waifu, WaifuStats
+from waifu_system.waifu_stats import WaifuStats
 from waifu_system.logic_calculations.waifu_calculations import get_drop_chance, get_drop_quantity, get_profit
 from item_system.generator import Generator
 from utilities.randomizer import Randomizer
+from discord import Member
 import json
 
 
 class WaifuGift(Reward):
-    def __init__(self, waifu: Waifu):
-        stats = waifu.waifu_stats
+    def __init__(self, owner: Member, stats: WaifuStats):
         self.lvl = stats.lvl
         self.luck_lvl = stats.luck_attr
         self.profit_lvl = stats.profit_attr
         self.strength_lvl = stats.strength_attr
         self.waifu_cost = stats.cost
-        self.owner = waifu.owner
+        self.owner = owner
+
         money = self._add_money()
         items = self._add_items()
-        print(f"Примогемы: {money}")
 
         super().__init__(guild=self.owner.guild, user=self.owner, money=money, items=items)
 
     def _add_money(self) -> int:
         return get_profit(self.profit_lvl, self.waifu_cost, self.strength_lvl)
 
-    def _add_items(self) -> []:
+    def _add_items(self) -> {}:
         with open("waifu_system/gifts.json", 'r') as file:
             gifts: dict = json.loads(file.read())
         item_chances_to_drop = []
@@ -53,15 +53,17 @@ class WaifuGift(Reward):
                 counter += 1
         return selected_item_types
 
-    def _create_items(self, selected_item_types: [], gifts_dict: {}) -> []:
+    def _create_items(self, selected_item_types: [], gifts_dict: {}) -> {}:
         items = {}
+        count = 0
         for item_type in selected_item_types:
             key_type = str(item_type)
             if key_type in gifts_dict.keys():
                 min_q = gifts_dict[key_type]['min_count']
                 max_q = gifts_dict[key_type]['max_count']
                 quantity = get_drop_quantity(Randomizer.get_rand(), self.luck_lvl, min_q, max_q)
-                items[Generator.create_item(item_type)] = quantity
+                items[count] = [Generator.create_item(item_type)] * quantity
+            count += 1
 
         return items
 

@@ -1,4 +1,4 @@
-from discord import app_commands
+
 import os
 import schedule
 import shop_system.market
@@ -14,8 +14,10 @@ import commands.cmd_inventory
 import commands.cmd_money
 import commands.cmd_hoyolab
 import commands.cmd_waifu
+import commands.cmd_admin
+from typing import List
 from commands.cmd_guild_settings import set_notifications_channel_id, set_transactions_channel_id
-import discord.app_commands
+from discord.app_commands import describe, Choice
 import music.custom_music
 from item_system.inventory import Inventory
 from item_system.generator import Generator
@@ -28,20 +30,19 @@ from utilities.gif_creator.gif import FramesNotFound, IncorrectGifURL, MuchFrame
 
 bot = Bot()
 
-class EmbedModal(discord.ui.Modal, title="Embed Constructor"):
-    def __init__(self):
-        super().__init__(
-        )
-        self.emTitle = discord.ui.TextInput(label="Embed Title", min_length=2, max_length=128, required=True, placeholder="Place your title here.")
-        self.add_item(self.emTitle)
 
-    async def on_submit(self, interaction: discord.Interaction):
-        title = self.emTitle
-        em = discord.Embed(title=title)
-        return await interaction.response.send_message(embed=em)
+async def items_autocomplete(
+    interaction: discord.Interaction,
+    current: int) -> List[discord.app_commands.Choice[int]]:
+    items_by_type = Generator.all_items_by_type
+    items = {items_by_type[index]['name']: items_by_type[index]['type'] for index in range(len(items_by_type))}
+    return [
+        discord.app_commands.Choice(name=item_name, value=item_type)
+        for item_name, item_type in items.items()
+    ]
 
 
-@bot.tree.command(name="profile", description="Показывает вашу карту профиля на сервере.")
+@bot.tree.command(name="профиль", description="Показывает вашу карту профиля на сервере.")
 async def app_show_card(interaction: discord.Interaction, user: discord.Member = None):
     await commands.cmd_profile.cmd_card(interaction, user)
 
@@ -51,14 +52,19 @@ async def app_custom_embed(interaction: discord.Interaction):
     await commands.cmd_main.create_custom_embed(interaction)
 
 
-@bot.tree.command(name="inventory", description="Открыть инвентарь.")
+@bot.tree.command(name="инвентарь", description="Открыть инвентарь.")
 async def inventory(interaction: discord.Interaction, is_private: bool = True):
     await commands.cmd_inventory.show_inventory(interaction, is_private)
 
 
-@bot.tree.command(name="give_item", description="Добавить предмет в свой инвентарь.")
-async def app_add_item(interaction: discord.Interaction, item_type: int, user: discord.User = None):
-    await shop_system.market.add_item(interaction, item_type, user)
+@bot.tree.command(name="выдать_предметы", description="Положить предметы в инвентарь пользователю.")
+@discord.app_commands.autocomplete(item=items_autocomplete)
+@describe(item="Выберите предмет из списка.",
+          quantity="Указать количество выбранных предметов.",
+          user="Выбрать пользователя.")
+async def app_add_items(interaction: discord.Interaction, item: int, quantity: int = 1, user: discord.User = None):
+    items = [item] * quantity
+    await shop_system.market.add_items(interaction, items, user)
 
 
 @bot.tree.command(name="play", description="Paimon споёт ваш любимый трек.")
@@ -66,24 +72,24 @@ async def app_play(interaction: discord.Interaction, search: str):
     await music.custom_music.play(interaction, search)
 
 
-@bot.tree.context_menu(name="profile")
+@bot.tree.context_menu(name="профиль")
 async def app_context_command(interaction: discord.Interaction, user: discord.User):
     return await commands.cmd_profile.cmd_card(interaction, user)
 
 
-@bot.tree.context_menu(name="balance")
+@bot.tree.context_menu(name="баланс")
 async def app_context_balance(interaction: discord.Interaction, user: discord.User):
     return await commands.cmd_money.balance(interaction, user)
 
 
-@bot.tree.command(name="reward")
+@bot.tree.command(name="награда")
 async def app_reward(interaction: discord.Interaction, money: int = None, exp: int = None):
     reward = Reward(guild=interaction.guild, user=interaction.user, money=money, exp=exp)
     output = await reward.apply()
     return await interaction.response.send_message(output)
 
 
-@bot.tree.command(name="balance", description="Узнать свой баланс.")
+@bot.tree.command(name="баланс", description="Узнать свой баланс.")
 async def app_balance(interaction: discord.Interaction):
     return await commands.cmd_money.balance(interaction)
 
@@ -188,14 +194,45 @@ async def take_gift(interaction: discord.Interaction, member: discord.Member):
     await interaction.response.send_message(f"Вайфу {member} подарила Вам подарок.")
 
 
-@take_gift()
-async def set_attrs(interaction: discord.Interaction, member: discord.Member):
-    await commands.cmd_waifu.change_waifu_attrs()
-    await interaction.response.send_message(f"Вайфу {member} подарила Вам подарок.")
+@bot.tree.command(name="изменить_характеристики", description="Поменять характеристики вайфу")
+@describe(member="Выбрать вайфу.",
+          speed="Изменить характеристику скорости сбора подарка вайфу.",
+          energy="Изменить характеристику энергии, вайфу будет быстрее востанавливаться.",
+          profit="Изменить характеристику прибыли, которую вайфу приносит.",
+          strength="Изменить характеристику усердности, ваша вайфу чаще дарит вам подарки.",
+          luck="Изменить характеристику удачи, повышает вероятность найти в подарках что-то ценное.")
+async def set_attrs(interaction: discord.Interaction,
+                    member: discord.Member,
+                    speed: int = None,
+                    energy: int = None,
+                    profit: int = None,
+                    strength: int = None,
+                    luck: int = None):
+    is_complete = await commands.cmd_waifu.change_waifu_attrs(member, speed, energy, profit, strength, luck)
+    if is_complete:
+        await interaction.response.send_message(f"Характеристики Вайфу {member} были успешно изменены.", ephemeral=True,
+                                                delete_after=5)
+    else:
+        await interaction.response.send_message(f"Введите значения в соответствующие характеристики.", ephemeral=True,
+                                                delete_after=5)
 
-    set_attrs_command = discord.app_commands.Command(callback=set_attrs, name="Атрибуты", description="Установить атрибуты выбранной вайфу.")
 
-    param = discord.app_commands.Parameter(command=set_attrs_command, parent=set_attrs_command)
+@bot.tree.command(name="вайфу", description="Посмотреть вайфу.")
+async def show_waifu_profile(interaction: discord.Interaction, member: discord.Member = None):
+    await commands.cmd_waifu.show_profile(interaction, member=member)
+
+
+@bot.tree.command(name="транзакции", description="Посмотреть транзакции пользователя за определенный период.")
+@describe(member="Выбрать пользователя.",
+          days="Транзакции, произошедшие за это количество дней.")
+async def show_transactions(interaction: discord.Interaction, member: discord.Member, days: int = 7):
+    await commands.cmd_admin.get_member_transactions(interaction=interaction, member=member, days=days)
+
+
+@bot.tree.command(name="транзакция", description="Посмотреть транзакцию пользователя по её ID.")
+@describe(transaction_id="ID транзакции.")
+async def show_transaction(interaction: discord.Interaction, transaction_id: int):
+    await commands.cmd_admin.get_transaction_by_id(interaction, transaction_id)
 
 bot.startup()
 os.environ['TOKEN'] = 'ODYwODA3ODc5NDE3NTI4MzIx.G8IL1T.IoPoLzzGIPpQr4UZNypmh8vR1JpEkcYe_-9CEk'

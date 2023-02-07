@@ -11,7 +11,6 @@ from item_system.inventory_gui import Inventory_GUI as GUI
 from bot_ui_kit.ui_interventory import UI_InterventoryView
 from bot_ui_kit.ui_creating_trade_interaction import UI_CreatingTradeView
 from item_system.interventory import Interventory
-from bot_ui_kit.ui_inventory_interaction import UI_InventoryView
 from bot import Bot
 
 
@@ -155,14 +154,22 @@ async def draw_inventory_edit(interaction: discord.Interaction, dict_items: {}, 
         buffer = gui.draw(chosen_item=chosen_item)
 
         if chosen_item:
-            description = dict_items[chosen_item][0].description
+            description = f"**Описание**\n>>> {dict_items[chosen_item][0].description}"
+            embed = Inventory_Embed(
+                interaction=interaction,
+                description=description,
+                image_url=f"attachment://inventory.png"
+            ).insert_field_at(
+                0, name="**Расходуемый**", value=f">>> {'Да' if dict_items[chosen_item][0].consumable else 'Нет'}"
+            ).insert_field_at(
+                0, name="**Складируемый**", value=f">>> {'Да' if dict_items[chosen_item][0].stackable else 'Нет'}"
+            )
         else:
             description = "Выберите предмет, чтобы увидеть его описание."
-        embed = Inventory_Embed(
-            interaction=interaction,
-            description=description,
-            image_url=f"attachment://inventory.png"
-        )
+            embed = Inventory_Embed(
+                interaction=interaction,
+                description=description,
+                image_url=f"attachment://inventory.png")
     if interaction.message:
         message_id = interaction.message.id
         await interaction.followup.edit_message(message_id=message_id, embed=embed,

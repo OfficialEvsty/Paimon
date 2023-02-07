@@ -68,7 +68,8 @@ async def wishing(interaction: discord.Interaction, items: []):
 
     generated_items = []
     generated_money = 0
-    for item in items:
+
+    for item_ in items:
         money = random.randint(min_money, max_money)
         generated_money += money
         with open("item_system/item_use/wishing.json", "r") as file:
@@ -86,8 +87,8 @@ async def wishing(interaction: discord.Interaction, items: []):
             dict_items[count].extend(generated_items)
             count += 1
         else:
-            for item in generated_items:
-                dict_items[count] = [item]
+            for item_ in generated_items:
+                dict_items[count] = [item_]
                 count += 1
 
 
@@ -95,7 +96,7 @@ async def wishing(interaction: discord.Interaction, items: []):
     reward = Reward(guild, user, generated_money, items=dict_items)
     await reward.apply()
 
-    reason = f"{user} помолился, использовав {item.name} {len(items)} шт."
+    reason = f"помолился, использовав {item.name} {len(items)} шт."
     transaction = Transaction(user, reason, generated_money, received_items=dict_items)
     await transaction.send()
     #return money, dict_items

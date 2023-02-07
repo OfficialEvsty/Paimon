@@ -24,7 +24,7 @@ class UI_ProfileView:
     async def create_view(self) -> discord.ui.View:
         edit_button = discord.ui.Button(
             style=discord.ButtonStyle.gray,
-            label="Edit",
+            label="Редактировать",
             custom_id="Edit"
         )
 
@@ -41,13 +41,13 @@ class UI_ProfileView:
 
         close_profile_button = discord.ui.Button(
             style=discord.ButtonStyle.red,
-            label="Close",
+            label="Закрыть",
             custom_id="Close_Button"
         )
 
         back_button = discord.ui.Button(
             style=discord.ButtonStyle.red,
-            label="Back",
+            label="Назад",
             custom_id="Back_Button"
         )
 
@@ -119,13 +119,13 @@ class UI_ProfileView:
 
                 edit_namecard_button = discord.ui.Button(
                     style=discord.ButtonStyle.gray,
-                    label="Card",
+                    label="Карты",
                     custom_id="Edit_Card"
                 )
 
                 edit_bio_button = discord.ui.Button(
                     style=discord.ButtonStyle.gray,
-                    label="Bio",
+                    label="Статус",
                     custom_id="Edit_Bio"
                 )
 
@@ -190,8 +190,6 @@ class UI_ProfileView:
                 view.on_submit = on_inputed_uid
                 view.timeout = self.profile_timeout
                 await interaction.response.send_modal(view)
-
-
 
         async def on_edit_namecard(interaction: discord.Interaction):
             if self.owner_id == interaction.user.id:

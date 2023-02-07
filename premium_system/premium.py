@@ -13,15 +13,16 @@ def check_premium():
     conn = psycopg2.connect(Database.str_connection)
     cur = conn.cursor()
     sql_get_until_date_premium_query = "SELECT * FROM premium_users;"
-    cursor = cur.execute(sql_get_until_date_premium_query)
-    result = cursor.fetchall()
+    cur.execute(sql_get_until_date_premium_query)
+    result = cur.fetchall()
     if result:
         for record in result:
-            if record[2] < date.strftime("Y%m%d"):
-                user_id = record[1]
-                sql_on_delete_expired_premium_status_query = f"DELETE FROM premium_users WHERE user_id = {user_id}"
+            print(type(record[2]), type(date))
+            if record[2] < date:
+                query_id = record[0]
+                sql_on_delete_expired_premium_status_query = f"DELETE FROM premium_users WHERE id = {query_id}"
                 cur.execute(sql_on_delete_expired_premium_status_query)
-
+                conn.commit()
             print(record[1])
     else:
         print("Нету премов")

@@ -79,7 +79,7 @@ class Bot(discord.Client):
                 password="www.freelavalink.ga"
             )
             print("We have logged in as {0.user}".format(self))
-            schedule.every().day.at("00:23").do(check_premium)
+            schedule.every().day.at("00:00").do(check_premium)
             await time_pending()
 
         @self.event

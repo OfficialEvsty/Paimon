@@ -114,9 +114,30 @@ class Database:
         on_create_table_waifus_query = 'CREATE TABLE IF NOT EXISTS waifus (' \
                                        'id SERIAL NOT NULL, ' \
                                        'guild BIGINT NOT NULL, ' \
-                                       'owner BIGINT NOT NULL, ' \
+                                       'owner BIGINT NULL, ' \
                                        'waifu BIGINT NOT NULL, ' \
                                        'PRIMARY KEY(id));'
+
+        on_create_table_items_input_query = 'CREATE TABLE IF NOT EXISTS items_input (' \
+                                            'id SERIAL NOT NULL, ' \
+                                            'type BIGINT NOT NULL, ' \
+                                            'transaction_id BIGINT NOT NULL, ' \
+                                            'PRIMARY KEY(id));'
+
+        on_create_table_items_output_query = 'CREATE TABLE IF NOT EXISTS items_output (' \
+                                             'id SERIAL NOT NULL, ' \
+                                             'type BIGINT NOT NULL, ' \
+                                             'transaction_id BIGINT NOT NULL, ' \
+                                             'PRIMARY KEY(id));'
+
+        on_create_table_transactions_query = 'CREATE TABLE IF NOT EXISTS transactions (' \
+                                             'id SERIAL NOT NULL, ' \
+                                             'guild BIGINT NOT NULL, ' \
+                                             'user_id BIGINT NOT NULL, ' \
+                                             'reason VARCHAR NOT NULL, ' \
+                                             'money BIGINT NULL, ' \
+                                             'date DATE NOT NULL, ' \
+                                             'PRIMARY KEY(id));'
 
         on_create_function_on_update_item_owner = 'CREATE OR REPLACE FUNCTION on_switch_vision_owner() ' \
                                           'RETURNS trigger AS $tab$ ' \
@@ -144,6 +165,9 @@ class Database:
         await self.conn.fetch(on_create_table_files_query)
         await self.conn.fetch(on_create_table_waifu_stats_query)
         await self.conn.fetch(on_create_table_waifus_query)
+        await self.conn.fetch(on_create_table_items_input_query)
+        await self.conn.fetch(on_create_table_items_output_query)
+        await self.conn.fetch(on_create_table_transactions_query)
 
         await self.conn.fetch(on_create_function_on_update_item_owner)
 

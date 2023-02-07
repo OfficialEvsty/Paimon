@@ -3,6 +3,7 @@ from money_system.money_embed import Money_Embed
 from money_system.money import update_money_db, get_money_db
 from transaction_system.transaction import Transaction
 from global_modifiers.modifier import Modifier
+from transaction_system.transactions_bd import save
 
 
 async def give_money(interaction: discord.Interaction, user: discord.User, amount: int):

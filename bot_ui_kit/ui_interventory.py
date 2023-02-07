@@ -17,7 +17,7 @@ class UI_InterventoryView(View):
         self.interventory = interventory
         self.original: discord.Webhook
 
-        self.__select_item__: Select = Select(placeholder="Select an item", custom_id="Select")
+        self.__select_item__: Select = Select(placeholder="Выбрать предмет", custom_id="Select")
         self.__select_item__.callback = self.__on_selected_item__
 
         self.__right_button__ = Button(style=ButtonStyle.gray, disabled=True, emoji=Emoji.Right_Arrow)
@@ -26,23 +26,23 @@ class UI_InterventoryView(View):
         self.__left_button__ = Button(style=ButtonStyle.gray, disabled=True, emoji=Emoji.Left_Arrow)
         self.__left_button__.callback = self.__on_left_button_clicked__
 
-        self.__use_button__ = Button(style=ButtonStyle.green, label="Use")
+        self.__use_button__ = Button(style=ButtonStyle.green, label="Использовать")
         self.__use_button__.callback = self.__on_use_button_clicked__
 
-        self.__trade_button__ = Button(style=ButtonStyle.green, label="Trade")
+        self.__trade_button__ = Button(style=ButtonStyle.green, label="Обмен")
         self.__trade_button__.callback = self.__on_trade_clicked__
 
-        self.__drop_button__ = Button(style=ButtonStyle.red, label="Drop")
+        self.__drop_button__ = Button(style=ButtonStyle.red, label="Выбросить")
         self.__drop_button__.callback = self.__on_drop_button_clicked__
 
-        self.__back_button__ = Button(style=ButtonStyle.red, label="Back")
+        self.__back_button__ = Button(style=ButtonStyle.red, label="Назад")
 
-        self.__close_button__ = Button(style=ButtonStyle.red, label="Close")
+        self.__close_button__ = Button(style=ButtonStyle.red, label="Закрыть")
         self.__close_button__.callback = self.__on_close_button_clicked__
 
         self.__x1__ = Button(style=ButtonStyle.gray, label="x1")
         self.__x10__ = Button(style=ButtonStyle.gray, label="x10")
-        self.__All__ = Button(style=ButtonStyle.gray, label="All")
+        self.__All__ = Button(style=ButtonStyle.gray, label="Все")
 
         self.__looking_items_preset__ = [self.__left_button__, self.__trade_button__, self.__close_button__,
                                      self.__right_button__, self.__select_item__]
@@ -70,6 +70,9 @@ class UI_InterventoryView(View):
                                             ephemeral=True, delete_after=5)
             return False
         return True
+
+    async def on_timeout(self) -> None:
+        await self.original.delete()
 
     # Method triggers when user tap on button 'right'.
     async def __on_right_button_clicked__(self, interaction: Interaction):

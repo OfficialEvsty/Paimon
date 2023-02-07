@@ -64,7 +64,8 @@ def get_drop_chance(luck_lvl: int, drop_chance: float, lvl: int) -> float:
 
 
 def get_drop_quantity(rand: float, luck_lvl: int, min_quantity: int = 1, max_quantity: int = 1) -> int:
-    quantity = min_quantity + round(log(luck_lvl+1) * min_quantity * rand)
+    additional_quantity = round(log(luck_lvl+1) * min_quantity * rand)
+    quantity = min_quantity + additional_quantity
     if quantity > max_quantity:
         quantity = max_quantity
     return quantity

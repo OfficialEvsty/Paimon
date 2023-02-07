@@ -32,6 +32,17 @@ class Inventory:
         await Bot.db.add_db(table, await Bot.db.filter(condition_pattern, conditions_dict), dict_container)
 
     @classmethod
+    async def add_items(cls, interaction: discord.Interaction, user: discord.User, items_id: []):
+        conn = await asyncpg.connect(Database.str_connection)
+        user_id = user.id
+        guild = interaction.guild.id
+
+        for item_id in items_id:
+            await conn.fetch(f"INSERT INTO items (guild, user_id, type) VALUES ({guild}, {user_id}, {item_id});")
+        await conn.close()
+
+
+    @classmethod
     async def remove_items(cls, items_to_remove: []):
         if_str_delete = f""
         for item in items_to_remove:
